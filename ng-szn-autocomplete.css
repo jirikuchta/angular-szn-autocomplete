@@ -1,0 +1,8 @@
+.szn-autocomplete-results {
+	position: absolute;
+	width: 100%;
+	border: 1px solid #ccc;
+	text-align: left;
+	background: #fff;
+	padding: 5px 0px;
+}

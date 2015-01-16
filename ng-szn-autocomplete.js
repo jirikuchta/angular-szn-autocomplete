@@ -12,20 +12,24 @@
 		this._$scope = $scope;
 		this._$attrs = $attrs;
 
-		this._options = this._getOptions();
-		this._delayTimeout = null;
-		this._deferredResults = null;
-		this._resultsScope = $scope.$new(true);
+		this._$scope.$evalAsync((function ($elm) {
+			this._options = this._getOptions();
+			this._delayTimeout = null;
+			this._deferredResults = null;
+			this._previousInputValue = $elm[0].value;
 
-		this._dom = {
-			input: $elm,
-			resultsCont: null
-		};
+			this._resultsScope = this._$scope.$new(true);
+			this._resultsScope.opened = false;
+			this._resultsScope.data = {};
 
-		this._dom.input.attr("autocomplete", "off");
-		this._dom.input.bind("keyup", this._keyup.bind(this));
+			this._dom = {
+				input: $elm,
+				resultsCont: null,
+				parent: this._getParentElm()
+			};
 
-		this._init();
+			this._init();
+		}).bind(this, $elm));
 	};
 
 	// default options
@@ -34,7 +38,9 @@
 		focusFirst: false,
 		onSelect: null,
 		searchMethod: "getAutocompleteResults",
-		delay: 0,
+		parentElm: "",
+		cssClass: "",
+		delay: 100,
 		minLength: 2
 	};
 
@@ -56,6 +62,10 @@
 			options[key] = this._$attrs["sznAutocomplete" + capKey] || optionsObject[key] || this.constructor.DEFAULT_OPTIONS[key];
 		}
 
+		if (!this._$scope[options.searchMethod]) {
+			throw new Error("ngSznAutocomplete: scope method \"" + options.searchMethod + "\" does not exist.");
+		}
+
 		return options;
 	};
 
@@ -63,11 +73,12 @@
 		this._getTemplate()
 			.then((function (template) {
 				this._dom.resultsCont = angular.element(this._$compile(template)(this._resultsScope));
-				this._dom.input.parent().append(this._dom.resultsCont);
+				this._dom.parent.append(this._dom.resultsCont);
 			}).bind(this))
 			.then((function () {
 				this._dom.input.attr("autocomplete", "off");
 				this._dom.input.bind("keyup", this._keyup.bind(this));
+				this._dom.input.bind("blur", this._close.bind(this));
 			}).bind(this));
 	};
 
@@ -98,28 +109,36 @@
 		this._deferredResults = this._$q.defer();
 		this._deferredResults.promise.then(
 			(function (data) {
-				if (!data.results || data.results.length)
+				if (!data.results || !data.results.length) {
+					this._close();
+					return;
+				}
+
+				console.log(data);
 
 				for (var key in data) {
-					this._resultsScope[key] = data[key];
+					this._resultsScope.data[key] = data[key];
 				}
+
 				this._open();
+			}).bind(this),
+			(function () {
+				this._close();
 			}).bind(this)
 		);
-
-		if (!this._$scope[this._options.searchMethod]) {
-			throw new Error("ngSznAutocomplete: scope method \"" + this._options.searchMethod + "\" does not exist.");
-		}
 
 		this._$scope[this._options.searchMethod](query, this._deferredResults);
 	};
 
 	Link.prototype._open = function () {
 		this._resultsScope.opened = true;
-		this._resultsScope.$digest();
 	};
 
 	Link.prototype._close = function () {
+		if (this._delayTimeout) {
+			this._$timeout.cancel(this._delayTimeout);
+		}
+
 		if (this._deferredResults) {
 			this._deferredResults.reject();
 		}
@@ -145,6 +164,18 @@
 		}
 
 		return deferred.promise;
+	};
+
+	Link.prototype._getParentElm = function () {
+		if (this._options.parentElm) {
+			var parent = document.querySelector(this._options.parentElm);
+			if (!parent) {
+				throw new Error("ngSznAutocomplete: CSS selector provided in \"parentElm\" option (\"" + this._options.parentElm + "\") does not match any element.");
+			}
+			return angular.element(parent);
+		} else {
+			return this._dom.input.parent();
+		}
 	};
 
 	ngModule.directive("sznAutocomplete", ["$q", "$timeout", "$http", "$compile", "$templateCache", function ($q, $timeout, $http, $compile, $templateCache) {
