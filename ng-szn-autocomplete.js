@@ -18,15 +18,13 @@
 			this._deferredResults = null;
 			this._previousInputValue = $elm[0].value;
 
-			this._resultsScope = this._$scope.$new(true);
-			this._resultsScope.opened = false;
-			this._resultsScope.data = {};
+			this._resultsScope = this._$scope.$new();
 
 			this._dom = {
 				input: $elm,
-				resultsCont: null,
-				parent: this._getParentElm()
+				resultsCont: null
 			};
+			this._dom.parent = this._getParentElm();
 
 			this._init();
 		}).bind(this, $elm));
@@ -34,7 +32,7 @@
 
 	// default options
 	Link.DEFAULT_OPTIONS = {
-		templateUrl: "/templ/ng-szn-autocomplete.html",
+		templateUrl: "../ng-szn-autocomplete.html",
 		focusFirst: false,
 		onSelect: null,
 		searchMethod: "getAutocompleteResults",
@@ -44,9 +42,9 @@
 		minLength: 2
 	};
 
-	Link.IGNORED_KEYS = [13, 17, 16, 18, 20, 37];
+	Link.IGNORED_KEYS = [17, 16, 18, 20, 37];
 
-	Link.NAVIGATION_KEYS = [9, 38, 39, 40];
+	Link.NAVIGATION_KEYS = [13, 27, 9, 38, 39, 40];
 
 	Link.prototype._getOptions = function () {
 		var options = {};
@@ -78,7 +76,9 @@
 			.then((function () {
 				this._dom.input.attr("autocomplete", "off");
 				this._dom.input.bind("keyup", this._keyup.bind(this));
-				this._dom.input.bind("blur", this._close.bind(this));
+				this._dom.input.bind("blur", this._close.bind(this, true));
+
+				this._$scope.focusResult = this._focusResult.bind(this);
 			}).bind(this));
 	};
 
@@ -86,8 +86,6 @@
 		if (this.constructor.IGNORED_KEYS.indexOf(e.keyCode) == -1) {
 			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) != -1) {
 				this._navigate(e.keyCode);
-			} else if (e.keyCode == 27) {
-				this._close();
 			} else {
 				var query = e.target.value;
 				if (query.length >= this._options.minLength) {
@@ -99,7 +97,7 @@
 						this._getResults(query);
 					}).bind(this), this._options.delay);
 				} else {
-					this._close()
+					this._close(true)
 				}
 			}
 		}
@@ -114,16 +112,18 @@
 					return;
 				}
 
-				console.log(data);
-
 				for (var key in data) {
-					this._resultsScope.data[key] = data[key];
+					this._resultsScope[key] = data[key];
+				}
+
+				if (this._options.focusFirst) {
+					this._resultsScope.results[0].selected = true;
 				}
 
 				this._open();
 			}).bind(this),
 			(function () {
-				this._close();
+				this._close(true);
 			}).bind(this)
 		);
 
@@ -131,10 +131,10 @@
 	};
 
 	Link.prototype._open = function () {
-		this._resultsScope.opened = true;
+		this._dom.resultsCont.css("display", "");
 	};
 
-	Link.prototype._close = function () {
+	Link.prototype._close = function (digest) {
 		if (this._delayTimeout) {
 			this._$timeout.cancel(this._delayTimeout);
 		}
@@ -143,12 +143,44 @@
 			this._deferredResults.reject();
 		}
 
-		this._resultsScope.opened = false;
-		this._resultsScope.$digest();
+		this._dom.resultsCont.css("display", "none");
+
+		if (digest) { this._$scope.$digest(); }
 	};
 
 	Link.prototype._navigate = function (key) {
+		switch (key) {
+			case 27: // ESC
+				this._close(true);
+				break;
+			case 13: // ENTER
+				this._select();
+				break;
+			case 38: // UP
+				break;
+			case 39: // DOWN
+				break;
+			case 39: // RIGHT
+				break;
+			case 9: // TAB
+				break;
+			default:
+				break;
+		};
+	};
 
+	Link.prototype._select = function () {
+		this._close(true);
+	};
+
+	Link.prototype._focusResult = function (index) {
+		this._resultsScope.results.forEach((function (result, i) {
+			result.selected = false;
+			if (i == index) {
+				result.selected = true;
+			}
+		}).bind(this));
+		this._$scope.$digest();
 	};
 
 	Link.prototype._getTemplate = function () {
@@ -186,12 +218,15 @@
 			}
 		};
 	}]);
-})();
 
-/**
- * NOTES
- *
- * bude daný formát vrácených dat
- * data bude vracet methoda "searchMethod", která při volání dostane hledaný výraz a promise, kterou po zahledaní resolvne s daty
- * bude existovat jedna až dvě další direktivy pro navěšení funcionalit na na samotných výslecích (zvýrazňování, výběr)
- */
+	ngModule.directive("sznAutocompleteResult", [function () {
+		return {
+			link: function ($scope, $elm, $attrs) {
+				$elm.on("mouseover", (function () {
+					$scope.focusResult($scope.$index);
+				}).bind(this));
+			}
+		};
+	}]);
+
+})();

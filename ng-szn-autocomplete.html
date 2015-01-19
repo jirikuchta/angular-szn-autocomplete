@@ -1,3 +1,5 @@
-<ul ng-hide="!opened" class="szn-autocomplete-results">
-	<li ng-repeat="result in data.results">{{result.value}}</li>
+<ul class="szn-autocomplete-results">
+	<li szn-autocomplete-result ng-repeat="result in results" ng-class="{selected: result.selected}">
+		{{result.value}}
+	</li>
 </ul>
