@@ -49,7 +49,7 @@
 	// default configuration
 	SznAutocompleteLink.DEFAULT_OPTIONS = {
 		templateUrl: "", 						// custom popup template URL
-		focusFirst: false, 						// automatically highlight the first result in the popup?
+		highlightFirst: false, 					// automatically highlight the first result in the popup?
 		shadowInput: false, 					// show the shadowInput?
 		onSelect: null, 						// a callback function to call after selection
 		searchMethod: "getAutocompleteResults", // name of scope method to call to get results
@@ -191,7 +191,7 @@
 
 				this._show();
 
-				if (this._options.focusFirst) {
+				if (this._options.highlightFirst) {
 					this._highlight(0);
 				}
 
