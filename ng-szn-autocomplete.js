@@ -92,8 +92,8 @@
 					this._$timeout(this._close.bind(this, true), 200);
 				}).bind(this));
 
-				this._resultsScope._focusResult = this._focusResult.bind(this);
-				this._resultsScope._select = this._select.bind(this);
+				this._resultsScope.focusResult = this._focusResult.bind(this);
+				this._resultsScope.select = this._select.bind(this);
 			}).bind(this));
 	};
 
@@ -185,35 +185,25 @@
 			switch (e.keyCode) {
 				case 27: // ESC
 					this._close(true);
-					break;
+				break;
 				case 13: // ENTER
 					if (this._resultsScope.isOpen) {
 						e.preventDefault();
 						this._select();
 					}
-					break;
+				break;
 				case 38: // UP
-					var index = this._getMoveIndex("up");
-					this._resultsScope.shadowInputValue = "";
-					this._focusResult(index, true);
-					this._setValue();
-					break;
+					this._move("up");
+				break;
 				case 40: // DOWN
-					var index = this._getMoveIndex("down");
-					this._resultsScope.shadowInputValue = "";
-					this._focusResult(index, true);
-					this._setValue();
-					break;
+					this._move("dowm");
+				break;
 				case 39: // RIGHT
-					if (this._options.shadowInput) {
-
-					}
-					break;
+					this._copyFromShadow();
+				break;
 				case 9: // TAB
-					if (this._options.shadowInput) {
-
-					}
-					break;
+					this._copyFromShadow();
+				break;
 			};
 		}
 	};
@@ -234,10 +224,14 @@
 	};
 
 	SznAutocompleteLink.prototype._focusResult = function (index, digest) {
-		this._resultsScope.results.forEach((function (result, i) {
-		}).bind(this));
 		this._resultsScope.focusedIndex = index;
 		if (digest) { this._resultsScope.$digest(); }
+	};
+
+	SznAutocompleteLink.prototype._move = function (direction) {
+		this._resultsScope.shadowInputValue = "";
+		this._focusResult(this._getMoveIndex(direction), true);
+		this._setValue();
 	};
 
 	SznAutocompleteLink.prototype._getMoveIndex = function (direction) {
@@ -249,6 +243,28 @@
 		}
 
 		return index;
+	};
+
+	SznAutocompleteLink.prototype._copyFromShadow = function () {
+		if (!this._options.shadowInput || !this._resultsScope.shadowInputValue) {
+			return;
+		}
+
+		var shadowWords = this._resultsScope.shadowInputValue.split(" ");
+		var queryWords = this._dom.input[0].value.split(" ");
+
+		var i = queryWords.length - 1;
+		if (queryWords[i].length < shadowWords[i].length) {
+			queryWords[i] = shadowWords[i];
+		} else if (shadowWords[i + 1]) {
+			queryWords.push(shadowWords[i + 1]);
+		} else {
+			return;
+		}
+
+		var query = queryWords.join(" ")
+		this._dom.input[0].value = query;
+		this._getResults(query);
 	};
 
 	SznAutocompleteLink.prototype._getTemplate = function () {
@@ -284,7 +300,7 @@
 
 	ngModule.directive("sznAutocomplete", ["$q", "$timeout", "$http", "$compile", "$templateCache", function ($q, $timeout, $http, $compile, $templateCache) {
 		return {
-			restrict: "A",
+			restrict: "AC",
 			link: function ($scope, $elm, $attrs) {
 				return new SznAutocompleteLink($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs);
 			}
@@ -296,16 +312,16 @@
 			link: function ($scope, $elm, $attrs) {
 				$elm.on("mousemove", (function () {
 					if ($scope.focusedIndex != $scope.$index) {
-						$scope._focusResult($scope.$index, true);
+						$scope.focusResult($scope.$index, true);
 					}
 				}).bind(this));
 				$elm.on("mouseout", (function () {
 					if ($scope.focusedIndex != $scope.$index) {
-						$scope._focusResult(-1, true);
+						$scope.focusResult(-1, true);
 					}
 				}).bind(this));
 				$elm.on("click", (function () {
-					$scope._select($scope.results[$scope.$index].value);
+					$scope.select($scope.results[$scope.$index].value);
 				}).bind(this));
 			}
 		};
