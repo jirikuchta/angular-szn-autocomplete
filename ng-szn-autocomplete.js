@@ -3,7 +3,7 @@
 
 	var ngModule = angular.module("ngSznAutocomplete", []);
 
-	var Link = function ($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs) {
+	var SznAutocompleteLink = function ($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs) {
 		this._$q = $q;
 		this._$timeout = $timeout;
 		this._$http = $http;
@@ -16,10 +16,10 @@
 			this._options = this._getOptions();
 			this._delayTimeout = null;
 			this._deferredResults = null;
-			this._focusedResultIndex = -1;
-			this._opened = true;
 
 			this._resultsScope = this._$scope.$new(true);
+			this._resultsScope.isOpen = false;
+			this._resultsScope.focusedIndex = -1;
 
 			this._dom = {
 				input: $elm,
@@ -31,9 +31,10 @@
 		}).bind(this, $elm));
 	};
 
-	Link.DEFAULT_OPTIONS = {
-		templateUrl: "../ng-szn-autocomplete.html",
+	SznAutocompleteLink.DEFAULT_OPTIONS = {
+		templateUrl: "",
 		focusFirst: false,
+		shadowInput: false,
 		onSelect: null,
 		searchMethod: "getAutocompleteResults",
 		parentElm: "",
@@ -41,11 +42,21 @@
 		minLength: 1
 	};
 
-	Link.IGNORED_KEYS = [17, 16, 18, 20, 37];
+	SznAutocompleteLink.IGNORED_KEYS = [17, 16, 18, 20, 37];
 
-	Link.NAVIGATION_KEYS = [13, 27, 9, 38, 39, 40];
+	SznAutocompleteLink.NAVIGATION_KEYS = [13, 27, 9, 38, 39, 40];
 
-	Link.prototype._getOptions = function () {
+	SznAutocompleteLink.SHADOW_INPUT_HTML =
+		'<input type="text" ng-value="shadowInputValue">';
+
+	SznAutocompleteLink.DEFAULT_TEMPLATE =
+		'<ul ng-show="isOpen" class="szn-autocomplete-results" ng-class="{loading: loading}">' +
+			'<li szn-autocomplete-result ng-repeat="result in results" ng-class="{selected: focusedIndex == $index}">' +
+				'{{result.value}}' +
+			'</li>' +
+		'</ul>';
+
+	SznAutocompleteLink.prototype._getOptions = function () {
 		var options = {};
 
 		var optionsObject = this._$scope[this._$attrs.sznAutocomplete] || {};
@@ -62,12 +73,16 @@
 		return options;
 	};
 
-	Link.prototype._init = function () {
+	SznAutocompleteLink.prototype._init = function () {
 		this._getTemplate()
 			.then((function (template) {
 				this._dom.resultsCont = angular.element(this._$compile(template)(this._resultsScope));
-				this._dom.resultsCont.css("display", "none");
 				this._dom.parent.append(this._dom.resultsCont);
+
+				if (this._options.shadowInput) {
+					this._dom.shadowInput = angular.element(this._$compile(this.constructor.SHADOW_INPUT_HTML)(this._resultsScope));
+					this._dom.parent.append(this._dom.shadowInput);
+				}
 			}).bind(this))
 			.then((function () {
 				this._dom.input.attr("autocomplete", "off");
@@ -77,12 +92,12 @@
 					this._$timeout(this._close.bind(this, true), 200);
 				}).bind(this));
 
-				this._resultsScope.focusResult = this._focusResult.bind(this);
-				this._resultsScope.select = this._select.bind(this);
+				this._resultsScope._focusResult = this._focusResult.bind(this);
+				this._resultsScope._select = this._select.bind(this);
 			}).bind(this));
 	};
 
-	Link.prototype._keyup = function (e) {
+	SznAutocompleteLink.prototype._keyup = function (e) {
 		if (this.constructor.IGNORED_KEYS.indexOf(e.keyCode) == -1) {
 			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) == -1) {
 				var query = e.target.value;
@@ -101,7 +116,7 @@
 		}
 	};
 
-	Link.prototype._keypress = function (e) {
+	SznAutocompleteLink.prototype._keypress = function (e) {
 		if (this.constructor.IGNORED_KEYS.indexOf(e.keyCode) == -1) {
 			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) != -1) {
 				this._navigate(e);
@@ -109,10 +124,11 @@
 		}
 	};
 
-	Link.prototype._getResults = function (query) {
+	SznAutocompleteLink.prototype._getResults = function (query) {
+		this._resultsScope.loading = true;
 		this._deferredResults = this._$q.defer();
 		this._deferredResults.promise.then(
-			(function (data) {
+			(function (query, data) {
 				if (!data.results || !data.results.length) {
 					this._close();
 					return;
@@ -127,7 +143,14 @@
 				if (this._options.focusFirst) {
 					this._focusResult(0);
 				}
-			}).bind(this),
+
+				this._resultsScope.shadowInputValue = "";
+				if (data.results[0].value.substring(0, query.length).toLowerCase() == query.toLowerCase()) {
+					this._resultsScope.shadowInputValue = data.results[0].value;
+				}
+
+				this._resultsScope.loading = false;
+			}).bind(this, query),
 			(function () {
 				this._close(true);
 			}).bind(this)
@@ -136,12 +159,11 @@
 		this._$scope[this._options.searchMethod](query, this._deferredResults);
 	};
 
-	Link.prototype._open = function () {
-		this._dom.resultsCont.css("display", "");
-		this._opened = true;
+	SznAutocompleteLink.prototype._open = function () {
+		this._resultsScope.isOpen = true;
 	};
 
-	Link.prototype._close = function (digest) {
+	SznAutocompleteLink.prototype._close = function (digest) {
 		if (this._delayTimeout) {
 			this._$timeout.cancel(this._delayTimeout);
 		}
@@ -150,32 +172,35 @@
 			this._deferredResults.reject();
 		}
 
-		this._dom.resultsCont.css("display", "none");
-		this._opened = false;
-		this._focusedResultIndex = -1;
+		this._resultsScope.isOpen = false;
+		this._resultsScope.loading = true;
+		this._resultsScope.focusedIndex = -1;
+		this._resultsScope.shadowInputValue = "";
 
-		if (digest) { this._$scope.$digest(); }
+		if (digest) { this._resultsScope.$digest(); }
 	};
 
-	Link.prototype._navigate = function (e) {
-		if (this._opened) {
+	SznAutocompleteLink.prototype._navigate = function (e) {
+		if (this._resultsScope.isOpen) {
 			switch (e.keyCode) {
 				case 27: // ESC
 					this._close(true);
 					break;
 				case 13: // ENTER
-					if (this._opened) {
+					if (this._resultsScope.isOpen) {
 						e.preventDefault();
 						this._select();
 					}
 					break;
 				case 38: // UP
 					var index = this._getMoveIndex("up");
+					this._resultsScope.shadowInputValue = "";
 					this._focusResult(index, true);
 					this._setValue();
 					break;
 				case 40: // DOWN
 					var index = this._getMoveIndex("down");
+					this._resultsScope.shadowInputValue = "";
 					this._focusResult(index, true);
 					this._setValue();
 					break;
@@ -193,7 +218,7 @@
 		}
 	};
 
-	Link.prototype._select = function () {
+	SznAutocompleteLink.prototype._select = function () {
 		this._setValue();
 
 		this._close(true);
@@ -203,22 +228,20 @@
 		}
 	};
 
-	Link.prototype._setValue = function (value) {
-		value = value || this._resultsScope.results[this._focusedResultIndex].value;
+	SznAutocompleteLink.prototype._setValue = function (value) {
+		value = value || this._resultsScope.results[this._resultsScope.focusedIndex].value;
 		this._dom.input[0].value = value;
 	};
 
-	Link.prototype._focusResult = function (index, digest) {
+	SznAutocompleteLink.prototype._focusResult = function (index, digest) {
 		this._resultsScope.results.forEach((function (result, i) {
-			result.selected = false;
-			if (i == index) { result.selected = true; }
 		}).bind(this));
-		this._focusedResultIndex = index;
-		if (digest) { this._$scope.$digest(); }
+		this._resultsScope.focusedIndex = index;
+		if (digest) { this._resultsScope.$digest(); }
 	};
 
-	Link.prototype._getMoveIndex = function (direction) {
-		var index = direction == "up" ? this._focusedResultIndex - 1 : this._focusedResultIndex + 1;
+	SznAutocompleteLink.prototype._getMoveIndex = function (direction) {
+		var index = direction == "up" ? this._resultsScope.focusedIndex - 1 : this._resultsScope.focusedIndex + 1;
 		if (index > this._resultsScope.results.length - 1) {
 			index = 0;
 		} else if (index < 0) {
@@ -228,26 +251,30 @@
 		return index;
 	};
 
-	Link.prototype._getTemplate = function () {
+	SznAutocompleteLink.prototype._getTemplate = function () {
 		var deferred = this._$q.defer();
 
-		var template = this._$templateCache.get(this._options.templateUrl);
-		if (template) {
-			deferred.resolve(template);
+		if (this._options.templateUrl) {
+			var template = this._$templateCache.get(this._options.templateUrl);
+			if (template) {
+				deferred.resolve(template);
+			} else {
+				this._$http.get(this._options.templateUrl)
+					.success((function (deferred, data) { deferred.resolve(data); }).bind(this, deferred))
+					.error((function (deferred, data) { throw new Error("ngSznAutocomplete: Failed to load template \"" + this._options.templateUrl + "\".") }));
+			}
 		} else {
-			this._$http.get(this._options.templateUrl).success(
-				(function (deferred, data) { deferred.resolve(data); }).bind(this, deferred)
-			);
+			deferred.resolve(this.constructor.DEFAULT_TEMPLATE);
 		}
 
 		return deferred.promise;
 	};
 
-	Link.prototype._getParentElm = function () {
+	SznAutocompleteLink.prototype._getParentElm = function () {
 		if (this._options.parentElm) {
 			var parent = document.querySelector(this._options.parentElm);
 			if (!parent) {
-				throw new Error("ngSznAutocomplete: CSS selector provided in \"parentElm\" option (\"" + this._options.parentElm + "\") does not match any element.");
+				throw new Error("ngSznAutocomplete: CSS selector \"" + this._options.parentElm + "\" does not match any element.");
 			}
 			return angular.element(parent);
 		} else {
@@ -258,8 +285,8 @@
 	ngModule.directive("sznAutocomplete", ["$q", "$timeout", "$http", "$compile", "$templateCache", function ($q, $timeout, $http, $compile, $templateCache) {
 		return {
 			restrict: "A",
-			link: function($scope, $elm, $attrs) {
-				return new Link($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs);
+			link: function ($scope, $elm, $attrs) {
+				return new SznAutocompleteLink($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs);
 			}
 		};
 	}]);
@@ -268,17 +295,17 @@
 		return {
 			link: function ($scope, $elm, $attrs) {
 				$elm.on("mousemove", (function () {
-					if (!$scope.results[$scope.$index].selected) {
-						$scope.focusResult($scope.$index, true);
+					if ($scope.focusedIndex != $scope.$index) {
+						$scope._focusResult($scope.$index, true);
 					}
 				}).bind(this));
 				$elm.on("mouseout", (function () {
-					if ($scope.results[$scope.$index].selected) {
-						$scope.focusResult(-1, true);
+					if ($scope.focusedIndex != $scope.$index) {
+						$scope._focusResult(-1, true);
 					}
 				}).bind(this));
 				$elm.on("click", (function () {
-					$scope.select($scope.results[$scope.$index].value);
+					$scope._select($scope.results[$scope.$index].value);
 				}).bind(this));
 			}
 		};
