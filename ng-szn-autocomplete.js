@@ -16,9 +16,10 @@
 			this._options = this._getOptions();
 			this._delayTimeout = null;
 			this._deferredResults = null;
-			this._previousInputValue = $elm[0].value;
+			this._focusedResultIndex = -1;
+			this._opened = true;
 
-			this._resultsScope = this._$scope.$new();
+			this._resultsScope = this._$scope.$new(true);
 
 			this._dom = {
 				input: $elm,
@@ -30,16 +31,14 @@
 		}).bind(this, $elm));
 	};
 
-	// default options
 	Link.DEFAULT_OPTIONS = {
 		templateUrl: "../ng-szn-autocomplete.html",
 		focusFirst: false,
 		onSelect: null,
 		searchMethod: "getAutocompleteResults",
 		parentElm: "",
-		cssClass: "",
 		delay: 100,
-		minLength: 2
+		minLength: 1
 	};
 
 	Link.IGNORED_KEYS = [17, 16, 18, 20, 37];
@@ -49,14 +48,10 @@
 	Link.prototype._getOptions = function () {
 		var options = {};
 
-		// options set via configuration object in "szn-autocomplete-option" attribute
-		var optionsObject = this._$scope[this._$attrs.sznAutocompleteOptions] || {};
+		var optionsObject = this._$scope[this._$attrs.sznAutocomplete] || {};
 
 		for (var key in this.constructor.DEFAULT_OPTIONS) {
-			// the key name with first letter capitalized to make comparision with normalized atribute name easier
 			var capKey = key.charAt(0).toUpperCase() + key.slice(1);
-
-			// options set via attributes have highest priority
 			options[key] = this._$attrs["sznAutocomplete" + capKey] || optionsObject[key] || this.constructor.DEFAULT_OPTIONS[key];
 		}
 
@@ -71,22 +66,25 @@
 		this._getTemplate()
 			.then((function (template) {
 				this._dom.resultsCont = angular.element(this._$compile(template)(this._resultsScope));
+				this._dom.resultsCont.css("display", "none");
 				this._dom.parent.append(this._dom.resultsCont);
 			}).bind(this))
 			.then((function () {
 				this._dom.input.attr("autocomplete", "off");
 				this._dom.input.bind("keyup", this._keyup.bind(this));
-				this._dom.input.bind("blur", this._close.bind(this, true));
+				this._dom.input.bind("keypress", this._keypress.bind(this));
+				this._dom.input.bind("blur", (function () {
+					this._$timeout(this._close.bind(this, true), 200);
+				}).bind(this));
 
-				this._$scope.focusResult = this._focusResult.bind(this);
+				this._resultsScope.focusResult = this._focusResult.bind(this);
+				this._resultsScope.select = this._select.bind(this);
 			}).bind(this));
 	};
 
 	Link.prototype._keyup = function (e) {
 		if (this.constructor.IGNORED_KEYS.indexOf(e.keyCode) == -1) {
-			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) != -1) {
-				this._navigate(e.keyCode);
-			} else {
+			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) == -1) {
 				var query = e.target.value;
 				if (query.length >= this._options.minLength) {
 					if (this._delayTimeout) {
@@ -99,6 +97,14 @@
 				} else {
 					this._close(true)
 				}
+			}
+		}
+	};
+
+	Link.prototype._keypress = function (e) {
+		if (this.constructor.IGNORED_KEYS.indexOf(e.keyCode) == -1) {
+			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) != -1) {
+				this._navigate(e);
 			}
 		}
 	};
@@ -116,11 +122,11 @@
 					this._resultsScope[key] = data[key];
 				}
 
-				if (this._options.focusFirst) {
-					this._resultsScope.results[0].selected = true;
-				}
-
 				this._open();
+
+				if (this._options.focusFirst) {
+					this._focusResult(0);
+				}
 			}).bind(this),
 			(function () {
 				this._close(true);
@@ -132,6 +138,7 @@
 
 	Link.prototype._open = function () {
 		this._dom.resultsCont.css("display", "");
+		this._opened = true;
 	};
 
 	Link.prototype._close = function (digest) {
@@ -144,43 +151,81 @@
 		}
 
 		this._dom.resultsCont.css("display", "none");
+		this._opened = false;
+		this._focusedResultIndex = -1;
 
 		if (digest) { this._$scope.$digest(); }
 	};
 
-	Link.prototype._navigate = function (key) {
-		switch (key) {
-			case 27: // ESC
-				this._close(true);
-				break;
-			case 13: // ENTER
-				this._select();
-				break;
-			case 38: // UP
-				break;
-			case 39: // DOWN
-				break;
-			case 39: // RIGHT
-				break;
-			case 9: // TAB
-				break;
-			default:
-				break;
-		};
+	Link.prototype._navigate = function (e) {
+		if (this._opened) {
+			switch (e.keyCode) {
+				case 27: // ESC
+					this._close(true);
+					break;
+				case 13: // ENTER
+					if (this._opened) {
+						e.preventDefault();
+						this._select();
+					}
+					break;
+				case 38: // UP
+					var index = this._getMoveIndex("up");
+					this._focusResult(index, true);
+					this._setValue();
+					break;
+				case 40: // DOWN
+					var index = this._getMoveIndex("down");
+					this._focusResult(index, true);
+					this._setValue();
+					break;
+				case 39: // RIGHT
+					if (this._options.shadowInput) {
+
+					}
+					break;
+				case 9: // TAB
+					if (this._options.shadowInput) {
+
+					}
+					break;
+			};
+		}
 	};
 
 	Link.prototype._select = function () {
+		this._setValue();
+
 		this._close(true);
+
+		if (this._options.onSelect) {
+			this._options.onSelect();
+		}
 	};
 
-	Link.prototype._focusResult = function (index) {
+	Link.prototype._setValue = function (value) {
+		value = value || this._resultsScope.results[this._focusedResultIndex].value;
+		this._dom.input[0].value = value;
+	};
+
+	Link.prototype._focusResult = function (index, digest) {
 		this._resultsScope.results.forEach((function (result, i) {
 			result.selected = false;
-			if (i == index) {
-				result.selected = true;
-			}
+			if (i == index) { result.selected = true; }
 		}).bind(this));
-		this._$scope.$digest();
+		this._focusedResultIndex = index;
+		if (digest) { this._$scope.$digest(); }
+	};
+
+	Link.prototype._getMoveIndex = function (direction) {
+		var index = direction == "up" ? this._focusedResultIndex - 1 : this._focusedResultIndex + 1;
+		if (index > this._resultsScope.results.length - 1) {
+			index = 0;
+		} else if (index < 0) {
+			index = this._resultsScope.results.length - 1;
+		}
+
+		return index;
 	};
 
 	Link.prototype._getTemplate = function () {
@@ -222,8 +267,18 @@
 	ngModule.directive("sznAutocompleteResult", [function () {
 		return {
 			link: function ($scope, $elm, $attrs) {
-				$elm.on("mouseover", (function () {
-					$scope.focusResult($scope.$index);
+				$elm.on("mousemove", (function () {
+					if (!$scope.results[$scope.$index].selected) {
+						$scope.focusResult($scope.$index, true);
+					}
+				}).bind(this));
+				$elm.on("mouseout", (function () {
+					if ($scope.results[$scope.$index].selected) {
+						$scope.focusResult(-1, true);
+					}
+				}).bind(this));
+				$elm.on("click", (function () {
+					$scope.select($scope.results[$scope.$index].value);
 				}).bind(this));
 			}
 		};

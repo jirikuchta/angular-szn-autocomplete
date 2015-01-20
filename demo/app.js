@@ -4,6 +4,12 @@ var App = angular.module("App", ["ngSznAutocomplete"]);
 
 App.controller("ngSznAutocomplete", function ($scope, $http) {
 
+	$scope.sznAutocompleteOptions = {
+		onSelect: (function () { console.log("vybráno"); }).bind(this),
+		focusFirst: true,
+		shadowInput: true
+	};
+
 	$scope.getAutocompleteResults = function (query, deferred) {
 		var url = "http://maps.googleapis.com/maps/api/geocode/json?address=" + query + "&sensor=false";
 		$http.get(url).success((function (deferred, data) {
