@@ -10,7 +10,7 @@
 (function () {
 	"use strict";
 
-	var ngModule = angular.module("ngSznAutocomplete", []);
+	var ngModule = angular.module( "ngSznAutocomplete", ["ngSznAutocomplete/template/shadowinput.html", "ngSznAutocomplete/template/default.html"]);
 
 	var SznAutocompleteLink = function ($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs) {
 		this._$q = $q;
@@ -22,7 +22,7 @@
 		this._$attrs = $attrs;
 
 		this._$scope.$evalAsync((function ($elm) {
-			
+
 			this._options = this._getOptions();
 
 			// waiting timeout before calling for results ("delay" option)
@@ -39,8 +39,8 @@
 			this._dom = {
 				input: $elm,
 				resultsCont: null
-			};	
-			this._dom.parent = this._getParentElm(); 
+			};
+			this._dom.parent = this._getParentElm();
 
 			this._init();
 		}).bind(this, $elm));
@@ -48,29 +48,19 @@
 
 	// default configuration
 	SznAutocompleteLink.DEFAULT_OPTIONS = {
-		templateUrl: "", 						// custom popup template URL
-		highlightFirst: false, 					// automatically highlight the first result in the popup?
-		shadowInput: false, 					// show the shadowInput?
-		onSelect: null, 						// a callback function to call after selection
-		searchMethod: "getAutocompleteResults", // name of scope method to call to get results
-		parentElm: "", 							// CSS selector of element in which the results and shadowInput should be appended into (default is parent element of the main input)
-		delay: 100, 							// time in ms to wait before calling for results
-		minLength: 1							// minimal number of character that needs to be entered to search for results
+		templateUrl: "ngSznAutocomplete/template/default.html", // popup template URL
+		highlightFirst: false, 									// automatically highlight the first result in the popup?
+		shadowInput: false, 									// show the shadowInput?
+		onSelect: null, 										// a callback function to call after selection
+		searchMethod: "getAutocompleteResults", 				// name of scope method to call to get results
+		parentElm: "", 											// CSS selector of element in which the results and shadowInput should be appended into (default is parent element of the main input)
+		delay: 100, 											// time in ms to wait before calling for results
+		minLength: 1											// minimal number of character that needs to be entered to search for results
 	};
 
 	SznAutocompleteLink.IGNORED_KEYS = [17, 16, 18, 20, 37];
 
 	SznAutocompleteLink.NAVIGATION_KEYS = [13, 27, 9, 38, 39, 40];
-
-	SznAutocompleteLink.SHADOW_INPUT_HTML =
-		'<input type="text" ng-value="shadowInputValue" disabled="disabled">';
-
-	SznAutocompleteLink.DEFAULT_TEMPLATE =
-		'<ul ng-show="show" class="szn-autocomplete-results" ng-class="{loading: loading}">' +
-			'<li szn-autocomplete-result ng-repeat="result in results" ng-class="{selected: highlightIndex == $index}">' +
-				'{{result.value}}' +
-			'</li>' +
-		'</ul>';
 
 	/**
 	 * Get the directive configuration.
@@ -96,18 +86,19 @@
 		return options;
 	};
 
-	/** 
+	/**
 	 * Init method
 	 * Appends popup and shadowInput elements into DOM, adds event listeners
 	 */
 	SznAutocompleteLink.prototype._init = function () {
 		this._getTemplate()
 			.then((function (template) {
-				this._dom.resultsCont = angular.element(this._$compile(template)(this._resultsScope));
+				this._dom.resultsCont = angular.element(this._$compile(this._$templateCache.get(this._options.templateUrl))(this._resultsScope));
 				this._dom.parent.append(this._dom.resultsCont);
 
 				if (this._options.shadowInput) {
-					this._dom.shadowInput = angular.element(this._$compile(this.constructor.SHADOW_INPUT_HTML)(this._resultsScope));
+					var shadowInputTemplate = this._$templateCache.get("ngSznAutocomplete/template/shadowinput.html");
+					this._dom.shadowInput = angular.element(this._$compile(shadowInputTemplate)(this._resultsScope));
 					this._dom.parent.append(this._dom.shadowInput);
 				}
 			}).bind(this))
@@ -116,7 +107,7 @@
 				this._dom.input.bind("keyup", this._keyup.bind(this));
 				this._dom.input.bind("keypress", this._keypress.bind(this));
 				this._dom.input.bind("blur", (function () {
-					// in case we click on some result the blur event is fired 
+					// in case we click on some result the blur event is fired
 					// before the result can be selected. So we have to wait a little.
 					this._$timeout(this._hide.bind(this, true), 200);
 				}).bind(this));
@@ -166,7 +157,7 @@
 		}
 	};
 
-	/** 
+	/**
 	 * Calls for results
 	 * @param {string} query
 	 */
@@ -196,7 +187,7 @@
 				}
 
 				this._resultsScope.shadowInputValue = "";
-				// 
+				//
 				if (data.results[0].value.substring(0, query.length).toLowerCase() == query.toLowerCase()) {
 					this._resultsScope.shadowInputValue = data.results[0].value;
 				}
@@ -344,7 +335,7 @@
 		var i = queryWords.length - 1;
 		if (queryWords[i].length < shadowWords[i].length) { // complete word
 			queryWords[i] = shadowWords[i];
-		} else if (shadowWords[i + 1]) { // append next word		
+		} else if (shadowWords[i + 1]) { // append next word
 			queryWords.push(shadowWords[i + 1]);
 		} else {
 			return;
@@ -363,17 +354,13 @@
 	SznAutocompleteLink.prototype._getTemplate = function () {
 		var deferred = this._$q.defer();
 
-		if (this._options.templateUrl) {
-			var template = this._$templateCache.get(this._options.templateUrl);
-			if (template) {
-				deferred.resolve(template);
-			} else {
-				this._$http.get(this._options.templateUrl)
-					.success((function (deferred, data) { deferred.resolve(data); }).bind(this, deferred))
-					.error((function (deferred, data) { throw new Error("ngSznAutocomplete: Failed to load template \"" + this._options.templateUrl + "\".") }));
-			}
+		var template = this._$templateCache.get(this._options.templateUrl);
+		if (template) {
+			deferred.resolve(template);
 		} else {
-			deferred.resolve(this.constructor.DEFAULT_TEMPLATE);
+			this._$http.get(this._options.templateUrl)
+				.success((function (deferred, data) { deferred.resolve(data); }).bind(this, deferred))
+				.error((function (deferred, data) { throw new Error("ngSznAutocomplete: Failed to load template \"" + this._options.templateUrl + "\".") }));
 		}
 
 		return deferred.promise;
@@ -381,7 +368,7 @@
 
 	/**
 	 * Finds and returns parent element to append popup and shadowInput elements into
-	 * @return {ngElement} 
+	 * @return {ngElement}
 	 */
 	SznAutocompleteLink.prototype._getParentElm = function () {
 		if (this._options.parentElm) {
@@ -428,6 +415,22 @@
 				}).bind(this));
 			}
 		};
+	}]);
+
+	angular.module("ngSznAutocomplete/template/shadowinput.html", []).run(["$templateCache", function($templateCache) {
+		$templateCache.put("ngSznAutocomplete/template/shadowinput.html",
+			'<input type="text" ng-value="shadowInputValue" disabled="disabled">'
+		);
+	}]);
+
+	angular.module("ngSznAutocomplete/template/default.html", []).run(["$templateCache", function($templateCache) {
+		$templateCache.put("ngSznAutocomplete/template/default.html",
+			'<ul ng-show="show" class="szn-autocomplete-results" ng-class="{loading: loading}">\n' +
+				'<li szn-autocomplete-result ng-repeat="result in results" ng-class="{selected: highlightIndex == $index}">\n' +
+					'{{result.value}}\n' +
+				'</li>\n' +
+			'</ul>'
+		);
 	}]);
 
 })();
