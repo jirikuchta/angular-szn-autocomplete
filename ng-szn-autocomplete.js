@@ -1,10 +1,9 @@
 /**
  * AngularJS directive to display suggestions while you type into text input.
+ *
  * @author Jiri Kuchta <jiri.kuchta@live.com>
  * @version 0.1.1
  *
- * TODO:
- * filter for bolding matches in results
  */
 (function () {
 	"use strict";
@@ -55,7 +54,8 @@
 		parentElm: "", 											// CSS selector of element in which the results and shadowInput should be appended into (default is parent element of the main input)
 		delay: 100, 											// time in ms to wait before calling for results
 		minLength: 1,											// minimal number of character that needs to be entered to search for results
-		uniqueId: null											// this ID will be passed as an argument in every event to easily identify this instance (in case there are multiple instances on the page)
+		uniqueId: null,											// this ID will be passed as an argument in every event to easily identify this instance (in case there are multiple instances on the page)
+		boldMatches: true										// bold matches in results?
 	};
 
 	SznAutocompleteLink.IGNORED_KEYS = [17, 16, 18, 20, 37];
@@ -112,9 +112,10 @@
 					this._$timeout(this._hide.bind(this, true), 200);
 				}).bind(this));
 
-				// we need some methods to be called within isolated popup scope
+				// we need some methods and variables to be accessible within isolated popup scope
 				this._resultsScope.highlight = this._highlight.bind(this);
 				this._resultsScope.select = this._select.bind(this);
+				this._resultsScope.boldMatches = this._options.boldMatches;
 
 				this._$scope.$emit("ngSznAutocomplete-init", {instanceId: this._options.uniqueId});
 			}).bind(this));
@@ -141,7 +142,7 @@
 					}).bind(this), this._options.delay);
 				} else {
 					// not enough number of characters
-					this._hide(true)
+					this._hide(true);
 				}
 			}
 		}
@@ -188,8 +189,9 @@
 					this._highlight(0);
 				}
 
+				this._resultsScope.query = this._dom.input[0].value;
 				this._resultsScope.shadowInputValue = "";
-				//
+
 				if (data.results[0].value.substring(0, query.length).toLowerCase() == query.toLowerCase()) {
 					this._resultsScope.shadowInputValue = data.results[0].value;
 				}
@@ -208,8 +210,10 @@
 	 * Show the popup
 	 */
 	SznAutocompleteLink.prototype._show = function () {
-		this._resultsScope.show = true;
-		this._$scope.$emit("ngSznAutocomplete-show", {instanceId: this._options.uniqueId});
+		if (!this._resultsScope.show) {
+			this._resultsScope.show = true;
+			this._$scope.$emit("ngSznAutocomplete-show", {instanceId: this._options.uniqueId});
+		}
 	};
 
 	/**
@@ -217,22 +221,24 @@
 	 * @param {bool} digest Trigger $digest cycle?
 	 */
 	SznAutocompleteLink.prototype._hide = function (digest) {
-		if (this._delayTimeout) {
-			this._$timeout.cancel(this._delayTimeout);
+		if (this._resultsScope.show) {
+			if (this._delayTimeout) {
+				this._$timeout.cancel(this._delayTimeout);
+			}
+
+			if (this._deferredResults) {
+				this._deferredResults.reject();
+			}
+
+			this._resultsScope.show = false;
+			this._resultsScope.loading = true;
+			this._resultsScope.highlightIndex = -1;
+			this._resultsScope.shadowInputValue = "";
+
+			if (digest) { this._resultsScope.$digest(); }
+
+			this._$scope.$emit("ngSznAutocomplete-hide", {instanceId: this._options.uniqueId});
 		}
-
-		if (this._deferredResults) {
-			this._deferredResults.reject();
-		}
-
-		this._resultsScope.show = false;
-		this._resultsScope.loading = true;
-		this._resultsScope.highlightIndex = -1;
-		this._resultsScope.shadowInputValue = "";
-
-		if (digest) { this._resultsScope.$digest(); }
-
-		this._$scope.$emit("ngSznAutocomplete-hide", {instanceId: this._options.uniqueId});
 	};
 
 	/**
@@ -427,17 +433,55 @@
 		};
 	}]);
 
+	/**
+	 * Custom bind-html directive, so we dont have to include whole "angular-sanitize" module
+	 */
+	ngModule.directive("viewAsHtml", function () {
+		return function ($scope, $elm, $attrs) {
+			$elm.addClass('ng-binding').data('$binding', $attrs.viewAsHtml);
+			$scope.$watch($attrs.viewAsHtml, function bindHtmlWatchAction(value) {
+				$elm.html(value || '');
+			});
+		};
+	});
+
+	/**
+	 * Filter to bold searched query matches in results
+	 */
+	ngModule.filter("sznAutocompleteBoldMatch", function() {
+		return function(matchItem, query) {
+			var i = matchItem.toLowerCase().indexOf(query.toLowerCase());
+			if (i < 0) {
+				return matchItem;
+			}
+
+			var parts = [];
+			parts.push("<b>" + matchItem.substring(0, i) + "</b>");
+			parts.push(matchItem.substring(i, i + query.length));
+			parts.push("<b>" + matchItem.substring(i + query.length) + "</b>");
+
+			return parts.join("");
+		};
+	 });
+
+	/**
+	 * Shadow input template
+	 */
 	angular.module("ngSznAutocomplete/template/shadowinput.html", []).run(["$templateCache", function($templateCache) {
 		$templateCache.put("ngSznAutocomplete/template/shadowinput.html",
 			'<input type="text" ng-value="shadowInputValue" disabled="disabled">'
 		);
 	}]);
 
+	/**
+	 * Default popup template
+	 */
 	angular.module("ngSznAutocomplete/template/default.html", []).run(["$templateCache", function($templateCache) {
 		$templateCache.put("ngSznAutocomplete/template/default.html",
 			'<ul ng-show="show" class="szn-autocomplete-results" ng-class="{loading: loading}">\n' +
 				'<li szn-autocomplete-result ng-repeat="result in results" ng-class="{selected: highlightIndex == $index}">\n' +
-					'{{result.value}}\n' +
+					'<span ng-if="boldMatches" view-as-html="result.value | sznAutocompleteBoldMatch:query"></span>\n' +
+					'<span ng-if="!boldMatches">{{result.value}}</span>\n' +
 				'</li>\n' +
 			'</ul>'
 		);
