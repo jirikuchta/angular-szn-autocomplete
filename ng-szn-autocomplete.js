@@ -4,7 +4,6 @@
  * @version 0.1.1
  *
  * TODO:
- * emit signals
  * filter for bolding matches in results
  */
 (function () {
@@ -55,7 +54,8 @@
 		searchMethod: "getAutocompleteResults", 				// name of scope method to call to get results
 		parentElm: "", 											// CSS selector of element in which the results and shadowInput should be appended into (default is parent element of the main input)
 		delay: 100, 											// time in ms to wait before calling for results
-		minLength: 1											// minimal number of character that needs to be entered to search for results
+		minLength: 1,											// minimal number of character that needs to be entered to search for results
+		uniqueId: null											// this ID will be passed as an argument in every event to easily identify this instance (in case there are multiple instances on the page)
 	};
 
 	SznAutocompleteLink.IGNORED_KEYS = [17, 16, 18, 20, 37];
@@ -115,6 +115,8 @@
 				// we need some methods to be called within isolated popup scope
 				this._resultsScope.highlight = this._highlight.bind(this);
 				this._resultsScope.select = this._select.bind(this);
+
+				this._$scope.$emit("ngSznAutocomplete-init", {instanceId: this._options.uniqueId});
 			}).bind(this));
 	};
 
@@ -207,6 +209,7 @@
 	 */
 	SznAutocompleteLink.prototype._show = function () {
 		this._resultsScope.show = true;
+		this._$scope.$emit("ngSznAutocomplete-show", {instanceId: this._options.uniqueId});
 	};
 
 	/**
@@ -228,6 +231,8 @@
 		this._resultsScope.shadowInputValue = "";
 
 		if (digest) { this._resultsScope.$digest(); }
+
+		this._$scope.$emit("ngSznAutocomplete-hide", {instanceId: this._options.uniqueId});
 	};
 
 	/**
@@ -274,6 +279,11 @@
 			// call the "onSelect" option callback
 			this._options.onSelect();
 		}
+
+		this._$scope.$emit("ngSznAutocomplete-select", {
+			instanceId: this._options.uniqueId,
+			value: this._resultsScope.results[this._resultsScope.highlightIndex].value
+		});
 	};
 
 	/**
