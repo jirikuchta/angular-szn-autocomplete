@@ -109,7 +109,7 @@
 			.then((function () {
 				this._dom.input.attr("autocomplete", "off");
 				this._dom.input.bind("keyup", this._keyup.bind(this));
-				this._dom.input.bind("keypress", this._keypress.bind(this));
+				this._dom.input.bind("keydown", this._keydown.bind(this));
 				this._dom.input.bind("blur", (function () {
 					// in case we click on some result the blur event is fired
 					// before the result can be selected. So we have to wait a little.
@@ -141,6 +141,8 @@
 						this._$timeout.cancel(this._delayTimeout);
 					}
 
+					this._dom.shadowInput.css("visibility", "hidden");
+
 					this._delayTimeout = this._$timeout((function () {
 						this._getResults(query);
 					}).bind(this), this._options.delay);
@@ -156,7 +158,7 @@
 	 * Handles keypress event
 	 * @param {object} event
 	 */
-	SznAutocompleteLink.prototype._keypress = function (e) {
+	SznAutocompleteLink.prototype._keydown = function (e) {
 		if (this.constructor.IGNORED_KEYS.indexOf(e.keyCode) == -1) {
 			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) != -1) {
 				this._navigate(e);
@@ -194,10 +196,15 @@
 				}
 
 				this._resultsScope.query = this._$scope[this._$attrs["ngModel"]];
-				this._resultsScope.shadowInputValue = "";
 
-				if (data.results[0].value.substring(0, query.length).toLowerCase() == query.toLowerCase()) {
-					this._resultsScope.shadowInputValue = data.results[0].value;
+				if (this._options.shadowInput) {
+					this._resultsScope.shadowInputValue = "";
+					if (data.results[0].value.toLowerCase() != query.toLowerCase()) {
+						if (data.results[0].value.substring(0, query.length).toLowerCase() == query.toLowerCase()) {
+							this._resultsScope.shadowInputValue = query + data.results[0].value.substring(query.length);
+						}
+					}
+					this._dom.shadowInput.css("visibility", "");
 				}
 
 				this._resultsScope.loading = false;
@@ -237,7 +244,10 @@
 			this._resultsScope.show = false;
 			this._resultsScope.loading = true;
 			this._resultsScope.highlightIndex = -1;
-			this._resultsScope.shadowInputValue = "";
+
+			if (this._options.shadowInput) {
+				this._resultsScope.shadowInputValue = "";
+			}
 
 			if (digest) { this._resultsScope.$digest(); }
 
@@ -247,7 +257,7 @@
 
 	/**
 	 * Handles navigation keys press
-	 * @param {object} event
+	 * @param {object} e
 	 */
 	SznAutocompleteLink.prototype._navigate = function (e) {
 		if (this._resultsScope.show) {
@@ -259,16 +269,24 @@
 					this._select();
 				break;
 				case 38: // UP
+					e.preventDefault();
 					this._move(-1);
 				break;
 				case 40: // DOWN
+					e.preventDefault();
 					this._move(1);
 				break;
 				case 39: // RIGHT
-					this._copyFromShadow();
+					if (this._options.shadowInput && this._resultsScope.shadowInputValue) {
+						e.preventDefault();
+						this._copyFromShadow();
+					}
 				break;
 				case 9: // TAB
-					this._copyFromShadow();
+					if (this._options.shadowInput && this._resultsScope.shadowInputValue) {
+						e.preventDefault();
+						this._copyFromShadow();
+					}
 				break;
 			};
 		}
@@ -319,7 +337,10 @@
 	 * @param {int} direction Direction to move ("-1" or "1")
 	 */
 	SznAutocompleteLink.prototype._move = function (direction) {
-		this._resultsScope.shadowInputValue = "";
+		if (this._options.shadowInput) {
+			this._resultsScope.shadowInputValue = "";
+		}
+
 		var i = this._getMoveIndex(direction);
 		this._highlight(i, true);
 		this._setValue(this._resultsScope.results[i].value);
@@ -345,10 +366,6 @@
 	 * Complete word or append new one from shadowInput to the main input
 	 */
 	SznAutocompleteLink.prototype._copyFromShadow = function () {
-		if (!this._options.shadowInput || !this._resultsScope.shadowInputValue) {
-			return;
-		}
-
 		var shadowWords = this._resultsScope.shadowInputValue.split(" ");
 		var queryWords = this._$scope[this._$attrs["ngModel"]].split(" ");
 
@@ -404,10 +421,12 @@
 			this._dom.popupParent = this._dom.input.parent();
 		}
 
-		if (this._options.shadowInputParent) {
-			this._dom.shadowInputParent = findElement(this._options.shadowInputParent);
-		} else {
-			this._dom.shadowInputParent = this._dom.input.parent();
+		if (this._options.shadowInput) {
+			if (this._options.shadowInputParent) {
+				this._dom.shadowInputParent = findElement(this._options.shadowInputParent);
+			} else {
+				this._dom.shadowInputParent = this._dom.input.parent();
+			}
 		}
 	};
 
