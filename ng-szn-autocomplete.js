@@ -36,9 +36,12 @@
 
 			this._dom = {
 				input: $elm,
-				resultsCont: null
+				popupCont: null,
+				popupParent: null,
+				shadowInput: null,
+				shadowInputParent: null
 			};
-			this._dom.parent = this._getParentElm();
+			this._findAndSetParentElements();
 
 			this._init();
 		}).bind(this, $elm));
@@ -51,7 +54,8 @@
 		shadowInput: false, 									// show the shadowInput?
 		onSelect: null, 										// a callback function to call after selection
 		searchMethod: "getAutocompleteResults", 				// name of scope method to call to get results
-		parentElm: "", 											// CSS selector of element in which the results and shadowInput should be appended into (default is parent element of the main input)
+		popupParent: "",										// CSS selector of element in which the results should be appended into (default is parent element of the main input)
+		shadowInputParent: "",									// CSS selector of element in which the shadowInput should be appended into (default is parent element of the main input)
 		delay: 100, 											// time in ms to wait before calling for results
 		minLength: 1,											// minimal number of character that needs to be entered to search for results
 		uniqueId: null,											// this ID will be passed as an argument in every event to easily identify this instance (in case there are multiple instances on the page)
@@ -93,13 +97,13 @@
 	SznAutocompleteLink.prototype._init = function () {
 		this._getTemplate()
 			.then((function (template) {
-				this._dom.resultsCont = angular.element(this._$compile(this._$templateCache.get(this._options.templateUrl))(this._resultsScope));
-				this._dom.parent.append(this._dom.resultsCont);
+				this._dom.popupCont = angular.element(this._$compile(this._$templateCache.get(this._options.templateUrl))(this._resultsScope));
+				this._dom.popupParent.append(this._dom.popupCont);
 
 				if (this._options.shadowInput) {
 					var shadowInputTemplate = this._$templateCache.get("ngSznAutocomplete/template/shadowinput.html");
 					this._dom.shadowInput = angular.element(this._$compile(shadowInputTemplate)(this._resultsScope));
-					this._dom.input[0].parentNode.insertBefore(this._dom.shadowInput[0], this._dom.input[0]);
+					this._dom.shadowInputParent[0].insertBefore(this._dom.shadowInput[0], this._dom.input[0]);
 				}
 			}).bind(this))
 			.then((function () {
@@ -383,18 +387,27 @@
 	};
 
 	/**
-	 * Finds and returns parent element to append popup and shadowInput elements into
-	 * @return {ngElement}
+	 * Finds parent elements to append popup and shadowInput elements into
 	 */
-	SznAutocompleteLink.prototype._getParentElm = function () {
-		if (this._options.parentElm) {
-			var parent = document.querySelector(this._options.parentElm);
-			if (!parent) {
-				throw new Error("ngSznAutocomplete: CSS selector \"" + this._options.parentElm + "\" does not match any element.");
+	SznAutocompleteLink.prototype._findAndSetParentElements = function () {
+		var findElement = function (selector) {
+			var elm = document.querySelector(selector);
+			if (!elm) {
+				throw new Error("ngSznAutocomplete: CSS selector \"" + selector + "\" does not match any element.");
 			}
-			return angular.element(parent);
+			return angular.element(elm);
+		};
+
+		if (this._options.popupParent) {
+			this._dom.popupParent = findElement(this._options.popupParent);
 		} else {
-			return this._dom.input.parent();
+			this._dom.popupParent = this._dom.input.parent();
+		}
+
+		if (this._options.shadowInputParent) {
+			this._dom.shadowInputParent = findElement(this._options.shadowInputParent);
+		} else {
+			this._dom.shadowInputParent = this._dom.input.parent();
 		}
 	};
 
