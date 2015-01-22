@@ -58,7 +58,7 @@
 		boldMatches: true										// bold matches in results?
 	};
 
-	SznAutocompleteLink.IGNORED_KEYS = [17, 16, 18, 20, 37];
+	SznAutocompleteLink.IGNORED_KEYS = [16, 17, 18, 20, 37];
 
 	SznAutocompleteLink.NAVIGATION_KEYS = [13, 27, 9, 38, 39, 40];
 
@@ -99,7 +99,7 @@
 				if (this._options.shadowInput) {
 					var shadowInputTemplate = this._$templateCache.get("ngSznAutocomplete/template/shadowinput.html");
 					this._dom.shadowInput = angular.element(this._$compile(shadowInputTemplate)(this._resultsScope));
-					this._dom.parent.append(this._dom.shadowInput);
+					this._dom.input[0].parentNode.insertBefore(this._dom.shadowInput[0], this._dom.input[0]);
 				}
 			}).bind(this))
 			.then((function () {
@@ -189,7 +189,7 @@
 					this._highlight(0);
 				}
 
-				this._resultsScope.query = this._dom.input[0].value;
+				this._resultsScope.query = this._$scope[this._$attrs["ngModel"]];
 				this._resultsScope.shadowInputValue = "";
 
 				if (data.results[0].value.substring(0, query.length).toLowerCase() == query.toLowerCase()) {
@@ -252,10 +252,7 @@
 					this._hide(true);
 				break;
 				case 13: // ENTER
-					if (this._resultsScope.show) {
-						e.preventDefault();
-						this._select();
-					}
+					this._select();
 				break;
 				case 38: // UP
 					this._move(-1);
@@ -276,20 +273,20 @@
 	/**
 	 * Is called after some result is selected.
 	 */
-	SznAutocompleteLink.prototype._select = function () {
-		this._setValue();
+	SznAutocompleteLink.prototype._select = function (value) {
+		if (value) { this._setValue(value); }
+
+		this._$scope.$emit("ngSznAutocomplete-select", {
+			instanceId: this._options.uniqueId,
+			value: this._$scope[this._$attrs["ngModel"]]
+		});
 
 		this._hide(true);
 
 		if (this._options.onSelect) {
 			// call the "onSelect" option callback
-			this._options.onSelect();
+			this._$scope[this._options.onSelect]();
 		}
-
-		this._$scope.$emit("ngSznAutocomplete-select", {
-			instanceId: this._options.uniqueId,
-			value: this._resultsScope.results[this._resultsScope.highlightIndex].value
-		});
 	};
 
 	/**
@@ -297,8 +294,10 @@
 	 * @param {string} value A string to be set as value. Default is actually highlighted result value.
 	 */
 	SznAutocompleteLink.prototype._setValue = function (value) {
-		var value = value || this._resultsScope.results[this._resultsScope.highlightIndex].value;
-		this._dom.input[0].value = value;
+		if (value) {
+			this._$scope[this._$attrs["ngModel"]] = value;
+			this._$scope.$digest();
+		}
 	};
 
 	/**
@@ -317,8 +316,9 @@
 	 */
 	SznAutocompleteLink.prototype._move = function (direction) {
 		this._resultsScope.shadowInputValue = "";
-		this._highlight(this._getMoveIndex(direction), true);
-		this._setValue();
+		var i = this._getMoveIndex(direction);
+		this._highlight(i, true);
+		this._setValue(this._resultsScope.results[i].value);
 	};
 
 	/**
@@ -346,7 +346,7 @@
 		}
 
 		var shadowWords = this._resultsScope.shadowInputValue.split(" ");
-		var queryWords = this._dom.input[0].value.split(" ");
+		var queryWords = this._$scope[this._$attrs["ngModel"]].split(" ");
 
 		var i = queryWords.length - 1;
 		if (queryWords[i].length < shadowWords[i].length) { // complete word
@@ -357,9 +357,9 @@
 			return;
 		}
 
-		// set input value a call for new results
+		// set input value and call for new results
 		var query = queryWords.join(" ")
-		this._dom.input[0].value = query;
+		this._$scope[this._$attrs["ngModel"]] = query;
 		this._getResults(query);
 	};
 
@@ -401,6 +401,7 @@
 	ngModule.directive("sznAutocomplete", ["$q", "$timeout", "$http", "$compile", "$templateCache", function ($q, $timeout, $http, $compile, $templateCache) {
 		return {
 			restrict: "AC",
+			require: 'ngModel',
 			link: function ($scope, $elm, $attrs) {
 				return new SznAutocompleteLink($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs);
 			}
@@ -469,7 +470,7 @@
 	 */
 	angular.module("ngSznAutocomplete/template/shadowinput.html", []).run(["$templateCache", function($templateCache) {
 		$templateCache.put("ngSznAutocomplete/template/shadowinput.html",
-			'<input type="text" ng-value="shadowInputValue" disabled="disabled">'
+			'<input type="text" class="szn-autocomplete-shadow-input" ng-value="shadowInputValue" disabled="disabled">'
 		);
 	}]);
 
