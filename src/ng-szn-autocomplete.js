@@ -1,8 +1,8 @@
 /**
- * AngularJS directive to display suggestions while you type into text input.
+ * An AngularJS directive to display suggestions while typing into text input.
  *
  * @author Jiri Kuchta <jiri.kuchta@live.com>
- * @version 0.1.1
+ * @version 1.0.0
  *
  */
 (function () {
