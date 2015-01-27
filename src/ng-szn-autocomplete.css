@@ -1,5 +1,4 @@
-input[data-szn-autocomplete],
-input[szn-autocomplete] {
+input.szn-shadow {
 	position: relative;
 	background: none;
 }

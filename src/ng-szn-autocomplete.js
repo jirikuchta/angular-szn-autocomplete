@@ -68,7 +68,7 @@
 
 	/**
 	 * Get the directive configuration.
-	 * Options can be set either via element attributes (e.g. szn-autocomplete-delay="500")
+	 * Options can be set either via element attributes (e.g. delay="500")
 	 * or in configuration object whose name is set as value of directive element attribute (e.g. szn-autocomplete="config")
 	 * @returns {object} configuration object
 	 */
@@ -78,9 +78,8 @@
 		var optionsObject = this._$scope[this._$attrs.sznAutocomplete] || {};
 
 		for (var key in this.constructor.DEFAULT_OPTIONS) {
-			var capKey = key.charAt(0).toUpperCase() + key.slice(1);
 			// options set via element attributes have highest priority
-			options[key] = this._$attrs["sznAutocomplete" + capKey] || optionsObject[key] || this.constructor.DEFAULT_OPTIONS[key];
+			options[key] = this._$attrs[key] || optionsObject[key] || this.constructor.DEFAULT_OPTIONS[key];
 		}
 
 		if (!this._$scope[options.searchMethod]) {
@@ -104,6 +103,9 @@
 					var shadowInputTemplate = this._$templateCache.get("ngSznAutocomplete/template/shadowinput.html");
 					this._dom.shadowInput = angular.element(this._$compile(shadowInputTemplate)(this._resultsScope));
 					this._dom.shadowInputParent[0].insertBefore(this._dom.shadowInput[0], this._dom.input[0]);
+
+					// some special styles are needed
+					this._dom.input.addClass("szn-shadow");
 				}
 			}).bind(this))
 			.then((function () {
@@ -141,9 +143,7 @@
 						this._$timeout.cancel(this._delayTimeout);
 					}
 
-					if (this._options.shadowInput) {
-						this._dom.shadowInput.css("visibility", "hidden");
-					}
+					this._dom.shadowInput.css("visibility", "hidden");
 
 					this._delayTimeout = this._$timeout((function () {
 						this._getResults(query);
@@ -504,7 +504,7 @@
 	 */
 	angular.module("ngSznAutocomplete/template/shadowinput.html", []).run(["$templateCache", function($templateCache) {
 		$templateCache.put("ngSznAutocomplete/template/shadowinput.html",
-			'<input type="text" class="szn-autocomplete-shadow-input" ng-value="shadowInputValue" disabled="disabled">'
+			'<input type="text" class="szn-autocomplete-shadow-input szn-shadow" ng-value="shadowInputValue" disabled="disabled">'
 		);
 	}]);
 
