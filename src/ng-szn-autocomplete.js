@@ -141,7 +141,9 @@
 						this._$timeout.cancel(this._delayTimeout);
 					}
 
-					this._dom.shadowInput.css("visibility", "hidden");
+					if (this._options.shadowInput) {
+						this._dom.shadowInput.css("visibility", "hidden");
+					}
 
 					this._delayTimeout = this._$timeout((function () {
 						this._getResults(query);

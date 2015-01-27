@@ -1,0 +1,33 @@
+input[data-szn-autocomplete],
+input[szn-autocomplete] {
+	position: relative;
+	background: none;
+}
+
+.szn-autocomplete-shadow-input {
+	position: absolute;
+	background: none;
+}
+
+.szn-autocomplete-results {
+	position: absolute;
+	z-index: 9999;
+	padding: 5px 0;
+	margin: 0;
+	border: 1px solid #CCC;
+	list-style-type: none;
+}
+
+.szn-autocomplete-results li {
+	padding: 0 5px;
+	line-height: 1.4;
+	cursor: pointer;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.szn-autocomplete-results li.selected {
+	background: Highlight;
+	color: HighlightText;
+}
