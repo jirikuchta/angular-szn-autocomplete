@@ -123,7 +123,7 @@
 				this._resultsScope.select = this._select.bind(this);
 				this._resultsScope.boldMatches = this._options.boldMatches;
 
-				this._$scope.$emit("ngSznAutocomplete-init", {instanceId: this._options.uniqueId});
+				this._$scope.$emit("sznAutocomplete-init", {instanceId: this._options.uniqueId});
 			}).bind(this));
 	};
 
@@ -225,7 +225,7 @@
 	SznAutocompleteLink.prototype._show = function () {
 		if (!this._resultsScope.show) {
 			this._resultsScope.show = true;
-			this._$scope.$emit("ngSznAutocomplete-show", {instanceId: this._options.uniqueId});
+			this._$scope.$emit("sznAutocomplete-show", {instanceId: this._options.uniqueId});
 		}
 	};
 
@@ -253,7 +253,7 @@
 
 			if (digest) { this._resultsScope.$digest(); }
 
-			this._$scope.$emit("ngSznAutocomplete-hide", {instanceId: this._options.uniqueId});
+			this._$scope.$emit("sznAutocomplete-hide", {instanceId: this._options.uniqueId});
 		}
 	};
 
@@ -300,7 +300,7 @@
 	SznAutocompleteLink.prototype._select = function (value) {
 		if (value) { this._setValue(value); }
 
-		this._$scope.$emit("ngSznAutocomplete-select", {
+		this._$scope.$emit("sznAutocomplete-select", {
 			instanceId: this._options.uniqueId,
 			value: this._$scope[this._$attrs["ngModel"]]
 		});
