@@ -8,7 +8,7 @@
 (function () {
 	"use strict";
 
-	var ngModule = angular.module( "ngSznAutocomplete", ["ngSznAutocomplete/template/shadowinput.html", "ngSznAutocomplete/template/default.html"]);
+	var ngModule = angular.module( "angular-szn-autocomplete", ["angular-szn-autocomplete/template/shadowinput.html", "angular-szn-autocomplete/template/default.html"]);
 
 	var SznAutocompleteLink = function ($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs) {
 		this._$q = $q;
@@ -29,10 +29,10 @@
 			// this is where we store promise when waiting for results
 			this._deferredResults = null;
 
-			// isolated scope that will be bound to the results template
-			this._resultsScope = this._$scope.$new(true);
-			this._resultsScope.show = false;
-			this._resultsScope.highlightIndex = -1;
+			// isolated scope that will be bound to the popup template
+			this._popupScope = this._$scope.$new(true);
+			this._popupScope.show = false;
+			this._popupScope.highlightIndex = -1;
 
 			this._dom = {
 				input: $elm,
@@ -43,13 +43,15 @@
 			};
 			this._findAndSetParentElements();
 
+			this._$scope.$on("$destroy", this._destroy.bind(this));
+
 			this._init();
 		}).bind(this, $elm));
 	};
 
 	// default configuration
 	SznAutocompleteLink.DEFAULT_OPTIONS = {
-		templateUrl: "ngSznAutocomplete/template/default.html", // popup template URL
+		templateUrl: "angular-szn-autocomplete/template/default.html", // popup template URL
 		highlightFirst: false, 									// automatically highlight the first result in the popup?
 		shadowInput: false, 									// show the shadowInput?
 		onSelect: null, 										// a callback function to call after selection
@@ -83,7 +85,7 @@
 		}
 
 		if (!this._$scope[options.searchMethod]) {
-			throw new Error("ngSznAutocomplete: scope method \"" + options.searchMethod + "\" does not exist.");
+			throw new Error("angular-szn-autocomplete: scope method \"" + options.searchMethod + "\" does not exist.");
 		}
 
 		return options;
@@ -91,37 +93,39 @@
 
 	/**
 	 * Init method
-	 * Appends popup and shadowInput elements into DOM, adds event listeners
+	 * Compiles and appends templates into DOM, adds event listeners
 	 */
 	SznAutocompleteLink.prototype._init = function () {
 		this._getTemplate()
 			.then((function (template) {
-				this._dom.popupCont = angular.element(this._$compile(this._$templateCache.get(this._options.templateUrl))(this._resultsScope));
+				this._dom.popupCont = angular.element(this._$compile(this._$templateCache.get(this._options.templateUrl))(this._popupScope));
 				this._dom.popupParent.append(this._dom.popupCont);
 
 				if (this._options.shadowInput) {
-					var shadowInputTemplate = this._$templateCache.get("ngSznAutocomplete/template/shadowinput.html");
-					this._dom.shadowInput = angular.element(this._$compile(shadowInputTemplate)(this._resultsScope));
+					var shadowInputTemplate = this._$templateCache.get("angular-szn-autocomplete/template/shadowinput.html");
+					this._dom.shadowInput = angular.element(this._$compile(shadowInputTemplate)(this._popupScope));
 					this._dom.shadowInputParent[0].insertBefore(this._dom.shadowInput[0], this._dom.input[0]);
 
-					// some special styles are needed
+					// some special styles are needed when using shadowInput
 					this._dom.input.addClass("szn-shadow");
 				}
 			}).bind(this))
 			.then((function () {
+				// disable native autocomplete
 				this._dom.input.attr("autocomplete", "off");
+
 				this._dom.input.bind("keyup", this._keyup.bind(this));
 				this._dom.input.bind("keydown", this._keydown.bind(this));
 				this._dom.input.bind("blur", (function () {
-					// in case we click on some result the blur event is fired
-					// before the result can be selected. So we have to wait a little.
+					// when we click on some item in popup the blur event is fired
+					// before the item can be selected. So we have to wait a little.
 					this._$timeout(this._hide.bind(this, true), 200);
 				}).bind(this));
 
 				// we need some methods and variables to be accessible within isolated popup scope
-				this._resultsScope.highlight = this._highlight.bind(this);
-				this._resultsScope.select = this._select.bind(this);
-				this._resultsScope.boldMatches = this._options.boldMatches;
+				this._popupScope.highlight = this._highlight.bind(this);
+				this._popupScope.select = this._select.bind(this);
+				this._popupScope.boldMatches = this._options.boldMatches;
 
 				this._$scope.$emit("sznAutocomplete-init", {instanceId: this._options.uniqueId});
 			}).bind(this));
@@ -129,7 +133,7 @@
 
 	/**
 	 * Handles keyup event
-	 * Calls for suggestions if every condition is met.
+	 * Calls for suggestions when every conditions are met.
 	 * @param {object} event
 	 */
 	SznAutocompleteLink.prototype._keyup = function (e) {
@@ -143,8 +147,12 @@
 						this._$timeout.cancel(this._delayTimeout);
 					}
 
-					this._dom.shadowInput.css("visibility", "hidden");
+					if (this._dom.shadowInput) {
+						// temporary hide shadowInput to prevent visual glitches
+						this._dom.shadowInput.css("visibility", "hidden");	
+					}
 
+					// call for results after 
 					this._delayTimeout = this._$timeout((function () {
 						this._getResults(query);
 					}).bind(this), this._options.delay);
@@ -173,14 +181,15 @@
 	 * @param {string} query
 	 */
 	SznAutocompleteLink.prototype._getResults = function (query) {
+
 		// "loading" scope variable can be used to show loading indicator
-		this._resultsScope.loading = true;
+		this._popupScope.loading = true;
 
 		this._deferredResults = this._$q.defer();
 		this._deferredResults.promise.then(
 			(function (query, data) {
 
-				// there is nothing to show
+				// there are no results. Hide popup.
 				if (!data.results || !data.results.length) {
 					this._hide();
 					return;
@@ -188,7 +197,7 @@
 
 				// all returned data are available in the popup scope
 				for (var key in data) {
-					this._resultsScope[key] = data[key];
+					this._popupScope[key] = data[key];
 				}
 
 				this._show();
@@ -197,19 +206,20 @@
 					this._highlight(0);
 				}
 
-				this._resultsScope.query = this._$scope[this._$attrs["ngModel"]];
+				// propage actual query into popup scope. Will be used for bolding string matches.
+				this._popupScope.query = this._$scope[this._$attrs["ngModel"]];
 
 				if (this._options.shadowInput) {
-					this._resultsScope.shadowInputValue = "";
+					this._popupScope.shadowInputValue = "";
 					if (data.results[0].value.toLowerCase() != query.toLowerCase()) {
 						if (data.results[0].value.substring(0, query.length).toLowerCase() == query.toLowerCase()) {
-							this._resultsScope.shadowInputValue = query + data.results[0].value.substring(query.length);
+							this._popupScope.shadowInputValue = query + data.results[0].value.substring(query.length);
 						}
 					}
 					this._dom.shadowInput.css("visibility", "");
 				}
 
-				this._resultsScope.loading = false;
+				this._popupScope.loading = false;
 			}).bind(this, query),
 			(function () {
 				this._hide(true);
@@ -223,8 +233,8 @@
 	 * Show the popup
 	 */
 	SznAutocompleteLink.prototype._show = function () {
-		if (!this._resultsScope.show) {
-			this._resultsScope.show = true;
+		if (!this._popupScope.show) {
+			this._popupScope.show = true;
 			this._$scope.$emit("sznAutocomplete-show", {instanceId: this._options.uniqueId});
 		}
 	};
@@ -234,7 +244,7 @@
 	 * @param {bool} digest Trigger $digest cycle?
 	 */
 	SznAutocompleteLink.prototype._hide = function (digest) {
-		if (this._resultsScope.show) {
+		if (this._popupScope.show) {
 			if (this._delayTimeout) {
 				this._$timeout.cancel(this._delayTimeout);
 			}
@@ -243,26 +253,26 @@
 				this._deferredResults.reject();
 			}
 
-			this._resultsScope.show = false;
-			this._resultsScope.loading = true;
-			this._resultsScope.highlightIndex = -1;
+			this._popupScope.show = false;
+			this._popupScope.loading = true;
+			this._popupScope.highlightIndex = -1;
 
 			if (this._options.shadowInput) {
-				this._resultsScope.shadowInputValue = "";
+				this._popupScope.shadowInputValue = "";
 			}
 
-			if (digest) { this._resultsScope.$digest(); }
+			if (digest) { this._popupScope.$digest(); }
 
 			this._$scope.$emit("sznAutocomplete-hide", {instanceId: this._options.uniqueId});
 		}
 	};
 
 	/**
-	 * Handles navigation keys press
+	 * Navigation handling
 	 * @param {object} e
 	 */
 	SznAutocompleteLink.prototype._navigate = function (e) {
-		if (this._resultsScope.show) {
+		if (this._popupScope.show) {
 			switch (e.keyCode) {
 				case 27: // ESC
 					this._hide(true);
@@ -279,13 +289,13 @@
 					this._move(1);
 				break;
 				case 39: // RIGHT
-					if (this._options.shadowInput && this._resultsScope.shadowInputValue) {
+					if (this._options.shadowInput && this._popupScope.shadowInputValue) {
 						e.preventDefault();
 						this._copyFromShadow();
 					}
 				break;
 				case 9: // TAB
-					if (this._options.shadowInput && this._resultsScope.shadowInputValue) {
+					if (this._options.shadowInput && this._popupScope.shadowInputValue) {
 						e.preventDefault();
 						this._copyFromShadow();
 					}
@@ -295,7 +305,7 @@
 	};
 
 	/**
-	 * Is called after some result is selected.
+	 * Handles popup item selection
 	 */
 	SznAutocompleteLink.prototype._select = function (value) {
 		if (value) { this._setValue(value); }
@@ -314,7 +324,7 @@
 	};
 
 	/**
-	 * Set the main input value
+	 * Set value into main input
 	 * @param {string} value A string to be set as value. Default is actually highlighted result value.
 	 */
 	SznAutocompleteLink.prototype._setValue = function (value) {
@@ -325,13 +335,13 @@
 	};
 
 	/**
-	 * Highlights a result item
+	 * Highlights a popup item
 	 * @param {int} index An index of results item to be highlighted
 	 * @param {bool} digest Trigger $digest cycle?
 	 */
 	SznAutocompleteLink.prototype._highlight = function (index, digest) {
-		this._resultsScope.highlightIndex = index;
-		if (digest) { this._resultsScope.$digest(); }
+		this._popupScope.highlightIndex = index;
+		if (digest) { this._popupScope.$digest(); }
 	};
 
 	/**
@@ -340,25 +350,25 @@
 	 */
 	SznAutocompleteLink.prototype._move = function (direction) {
 		if (this._options.shadowInput) {
-			this._resultsScope.shadowInputValue = "";
+			this._popupScope.shadowInputValue = "";
 		}
 
 		var i = this._getMoveIndex(direction);
 		this._highlight(i, true);
-		this._setValue(this._resultsScope.results[i].value);
+		this._setValue(this._popupScope.results[i].value);
 	};
 
 	/**
-	 * Returns index of next or previous result item
+	 * Returns index of next or previous popup item
 	 * @param {int} direction Direction to move ("-1" or "1")
 	 * @return {int} index
 	 */
 	SznAutocompleteLink.prototype._getMoveIndex = function (direction) {
-		var index = this._resultsScope.highlightIndex + direction;
-		if (index > this._resultsScope.results.length - 1) {
+		var index = this._popupScope.highlightIndex + direction;
+		if (index > this._popupScope.results.length - 1) {
 			index = 0;
 		} else if (index < 0) {
-			index = this._resultsScope.results.length - 1;
+			index = this._popupScope.results.length - 1;
 		}
 
 		return index;
@@ -368,7 +378,7 @@
 	 * Complete word or append new one from shadowInput to the main input
 	 */
 	SznAutocompleteLink.prototype._copyFromShadow = function () {
-		var shadowWords = this._resultsScope.shadowInputValue.split(" ");
+		var shadowWords = this._popupScope.shadowInputValue.split(" ");
 		var queryWords = this._$scope[this._$attrs["ngModel"]].split(" ");
 
 		var i = queryWords.length - 1;
@@ -399,20 +409,20 @@
 		} else {
 			this._$http.get(this._options.templateUrl)
 				.success((function (deferred, data) { deferred.resolve(data); }).bind(this, deferred))
-				.error((function (deferred, data) { throw new Error("ngSznAutocomplete: Failed to load template \"" + this._options.templateUrl + "\".") }));
+				.error((function (deferred, data) { throw new Error("angular-szn-autocomplete: Failed to load template \"" + this._options.templateUrl + "\".") }));
 		}
 
 		return deferred.promise;
 	};
 
 	/**
-	 * Finds parent elements to append popup and shadowInput elements into
+	 * Finds parent elements in which the popup and shadowInput should be appended into
 	 */
 	SznAutocompleteLink.prototype._findAndSetParentElements = function () {
 		var findElement = function (selector) {
 			var elm = document.querySelector(selector);
 			if (!elm) {
-				throw new Error("ngSznAutocomplete: CSS selector \"" + selector + "\" does not match any element.");
+				throw new Error("angular-szn-autocomplete: CSS selector \"" + selector + "\" does not match any element.");
 			}
 			return angular.element(elm);
 		};
@@ -432,6 +442,14 @@
 		}
 	};
 
+	/**
+	 * Directive destructor
+	 */
+	SznAutocompleteLink.prototype._destroy = function () {
+		// manually destroy the popup scope
+		this._popupScope.$destroy();
+	};
+
 	ngModule.directive("sznAutocomplete", ["$q", "$timeout", "$http", "$compile", "$templateCache", function ($q, $timeout, $http, $compile, $templateCache) {
 		return {
 			restrict: "AC",
@@ -443,7 +461,7 @@
 	}]);
 
 	/**
-	 * A special directive for each item in results.
+	 * A special directive for each item in popup.
 	 */
 	ngModule.directive("sznAutocompleteResult", [function () {
 		return {
@@ -481,7 +499,7 @@
 	});
 
 	/**
-	 * Filter to bold searched query matches in results
+	 * Filter to bold search query matches in popup items
 	 */
 	ngModule.filter("sznAutocompleteBoldMatch", function() {
 		return function(matchItem, query) {
@@ -502,8 +520,8 @@
 	/**
 	 * Shadow input template
 	 */
-	angular.module("ngSznAutocomplete/template/shadowinput.html", []).run(["$templateCache", function($templateCache) {
-		$templateCache.put("ngSznAutocomplete/template/shadowinput.html",
+	angular.module("angular-szn-autocomplete/template/shadowinput.html", []).run(["$templateCache", function($templateCache) {
+		$templateCache.put("angular-szn-autocomplete/template/shadowinput.html",
 			'<input type="text" class="szn-autocomplete-shadow-input szn-shadow" ng-value="shadowInputValue" disabled="disabled">'
 		);
 	}]);
@@ -511,8 +529,8 @@
 	/**
 	 * Default popup template
 	 */
-	angular.module("ngSznAutocomplete/template/default.html", []).run(["$templateCache", function($templateCache) {
-		$templateCache.put("ngSznAutocomplete/template/default.html",
+	angular.module("angular-szn-autocomplete/template/default.html", []).run(["$templateCache", function($templateCache) {
+		$templateCache.put("angular-szn-autocomplete/template/default.html",
 			'<ul ng-show="show" class="szn-autocomplete-results" ng-class="{loading: loading}">\n' +
 				'<li szn-autocomplete-result ng-repeat="result in results" ng-class="{selected: highlightIndex == $index}">\n' +
 					'<span ng-if="boldMatches" view-as-html="result.value | sznAutocompleteBoldMatch:query"></span>\n' +

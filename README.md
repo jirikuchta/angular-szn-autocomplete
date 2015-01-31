@@ -1,1 +1,1 @@
-# ngSznAutocomplete
+# angular-szn-autocomplete

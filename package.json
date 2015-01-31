@@ -1,14 +1,14 @@
 {
-	"name": "ngSznAutocomplete",
+	"name": "angular-szn-autocomplete",
 	"version": "1.0.0",
 	"description": "An AngularJS directive to display suggestions while typing into text input.",
-	"main": "src/ng-szn-autocomplete.js",
+	"main": "src/angular-szn-autocomplete.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/jirikuchta/ngSznAutocomplete.git"
+		"url": "https://github.com/jirikuchta/angular-szn-autocomplete.git"
 	},
 	"keywords": [
 		"angular",
@@ -20,6 +20,6 @@
 	"author": "Jiri Kuchta",
 	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/jirikuchta/ngSznAutocomplete/issues"
+		"url": "https://github.com/jirikuchta/angular-szn-autocomplete/issues"
 	}
 }
