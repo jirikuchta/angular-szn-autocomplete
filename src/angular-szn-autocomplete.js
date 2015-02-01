@@ -306,20 +306,21 @@
 
 	/**
 	 * Handles popup item selection
+	 * @param {object} item Scope data of selected item
 	 */
-	SznAutocompleteLink.prototype._select = function (value) {
-		if (value) { this._setValue(value); }
+	SznAutocompleteLink.prototype._select = function (item) {
+		if (item) { this._setValue(item.value); }
 
 		this._$scope.$emit("sznAutocomplete-select", {
 			instanceId: this._options.uniqueId,
-			value: this._$scope[this._$attrs["ngModel"]]
+			itemData: item
 		});
 
 		this._hide(true);
 
 		if (this._options.onSelect) {
 			// call the "onSelect" option callback
-			this._$scope[this._options.onSelect]();
+			this._$scope[this._options.onSelect](item);
 		}
 	};
 
@@ -409,7 +410,7 @@
 		} else {
 			this._$http.get(this._options.templateUrl)
 				.success((function (deferred, data) { deferred.resolve(data); }).bind(this, deferred))
-				.error((function (deferred, data) { throw new Error("angular-szn-autocomplete: Failed to load template \"" + this._options.templateUrl + "\".") }));
+				.error((function (deferred, data) { throw new Error("angular-szn-autocomplete: Failed to load template \"" + this._options.templateUrl + "\".") }).bind(this));
 		}
 
 		return deferred.promise;
@@ -480,7 +481,7 @@
 				}).bind(this));
 				$elm.on("click", (function () {
 					// select this result
-					$scope.select($scope.results[$scope.$index].value);
+					$scope.select($scope.results[$scope.$index]);
 				}).bind(this));
 			}
 		};
