@@ -1,12 +1,13 @@
 # angular-szn-autocomplete
-An [AngularJS](https://github.com/angular/angular.js) directive providing suggestions while you type into text input and it enables you to select from them.
+An [AngularJS](https://github.com/angular/angular.js) directive providing suggestions as you type into text input.
 
 Features:
-* easy way to use custom template
-* "[shadowInput](#shadowInput)"
+* custom template support
+* can show top suggestion as a hint (i.e. background text)
 * keyboard and mouse control
 * works in legacy browsers
 * no dependencies other than the AngularJS library
+* emits custom events
 
 **Requirements:** AngularJS **1.2.x** or **1.3.x**
 
@@ -48,9 +49,9 @@ or configure the directive via element attributes. For example:
 
 Settings set via element attributes have higher priority and override settings from the configuration object (if both ways are used).
 
-List of possible settings:
+**List of possible settings:**
 * **highlightFirst**: `(default: false)` Whether to automatically hightlight first item in suggestions results.
-* **shadowInput**: `(default: false)` <a id="shadowInput"></a> 
+* **shadowInput**: `(default: false)` <a id="shadowInput"></a> Whether to show a hint.
 * **onSelect**: Name of scope function to be called after selection. Allows to perform custom action upon selection. An object with selected item data will be passed to this function.
 * **searchMethod**: `(default: "getAutocompleteResults")` Allows set custom name of scope function that provides search suggestions. [Read more](#test). 
 * **popupParent**: `(default: input parent element)` A CSS selector of an element in which the popup should be appended into.
@@ -63,7 +64,9 @@ List of possible settings:
 
 All attributes are optional and everything should work fine without any customization as far as the `getAutocompleteResults` method is defined in the scope.
 
-##Events
+**Searchmethod**
+
+## Events
 The directive emits following events allowing further customization:
 
 * `sznAutocomplete-init`: emitted when the directive is initialized
