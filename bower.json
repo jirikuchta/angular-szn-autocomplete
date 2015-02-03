@@ -6,13 +6,17 @@
 		"Jiri Kuchta <jiri.kuchta@live.com>"
 	],
 	"description": "An AngularJS directive to display suggestions while typing into text input.",
-	"main": "src/angular-szn-autocomplete.js",
+	"main": [
+		"src/angular-szn-autocomplete.css",
+		"src/angular-szn-autocomplete.js"
+	],
 	"keywords": [
 		"angular",
 		"angularjs",
 		"autocomplete",
 		"suggest",
-		"typeahead"
+		"typeahead",
+		"directive"
 	],
 	"license": "MIT",
 	"ignore": [
@@ -23,6 +27,6 @@
 		"tests"
 	],
 	"dependencies": {
-		"angular": "~1.2.23"
+		"angular": "^1.2.23"
 	}
 }

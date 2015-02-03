@@ -15,7 +15,8 @@
 		"angularjs",
 		"autocomplete",
 		"suggest",
-		"typeahead"
+		"typeahead",
+		"directive"
 	],
 	"author": "Jiri Kuchta",
 	"license": "MIT",
