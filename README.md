@@ -53,7 +53,7 @@ Settings set via element attributes have higher priority and override settings f
 * **highlightFirst**: `(default: false)` Whether to automatically hightlight first item in suggestions results.
 * **shadowInput**: `(default: false)` <a id="shadowInput"></a> Whether to show a hint.
 * **onSelect**: Name of scope function to be called after selection. Allows to perform custom action upon selection. An selected item data will be passed to this function.
-* **searchMethod**: `(default: "getAutocompleteResults")` Allows set custom name of scope function that provides suggestions data. [Read more](#providing-data). 
+* **searchMethod**: `(default: "getAutocompleteResults")` Allows set custom name of scope function that provides suggestions data. [Read more](#providing-data-for-the-directive). 
 * **popupParent**: `(default: input parent element)` A CSS selector of an element in which the popup should be appended into.
 * **shadowInputParent**: `(default: input parent element)` A CSS selector of an element in which the shadowInput should be appended into.
 * **delay**: `(default: 100)` Time in ms to wait before calling the `searchMethod`.
@@ -62,9 +62,9 @@ Settings set via element attributes have higher priority and override settings f
 * **boldMatches**: `(default: true)` Should the matches in suggestion be bold?
 * **templateUrl**: Path to your custom template.
 
-All attributes are optional and everything should work fine without any customization as far as the `getAutocompleteResults` method is defined in the scope ([more](#providing-data)).
+All attributes are optional and everything should work fine without any customization as far as the `getAutocompleteResults` method is defined in the scope ([more](#providing-data-for-the-directive)).
 
-### Providing data for the directive <span id="providing-data"></span>
+### Providing data for the directive
 In order to obtain data, the directive calls scope function named `getAutocompleteResults` (name of the function can be changed via "searchMethod" option). It is up to you what logic you put into this function to get the data (i.e. searching within some static object or sending an HTTP request). 
 
 Two argument are passed to the function:
