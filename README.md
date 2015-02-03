@@ -52,19 +52,40 @@ Settings set via element attributes have higher priority and override settings f
 **List of possible settings:**
 * **highlightFirst**: `(default: false)` Whether to automatically hightlight first item in suggestions results.
 * **shadowInput**: `(default: false)` <a id="shadowInput"></a> Whether to show a hint.
-* **onSelect**: Name of scope function to be called after selection. Allows to perform custom action upon selection. An object with selected item data will be passed to this function.
-* **searchMethod**: `(default: "getAutocompleteResults")` Allows set custom name of scope function that provides search suggestions. [Read more](#test). 
+* **onSelect**: Name of scope function to be called after selection. Allows to perform custom action upon selection. An selected item data will be passed to this function.
+* **searchMethod**: `(default: "getAutocompleteResults")` Allows set custom name of scope function that provides suggestions data. [Read more](#providing-data). 
 * **popupParent**: `(default: input parent element)` A CSS selector of an element in which the popup should be appended into.
 * **shadowInputParent**: `(default: input parent element)` A CSS selector of an element in which the shadowInput should be appended into.
 * **delay**: `(default: 100)` Time in ms to wait before calling the `searchMethod`.
 * **minLength**: `(default: 1)` Number of characters that needs to be entered before the directive does any work.
 * **uniqueId**: an unique ID that will be used as an idenficator in emitted events. Comes handy when you have multiple instances of the directive on the page and need to identify which instance emitted particular event.
-* **boldMatches**: `(default: true)` Should the matches in suggestion be bolded?
+* **boldMatches**: `(default: true)` Should the matches in suggestion be bold?
 * **templateUrl**: Path to your custom template.
 
-All attributes are optional and everything should work fine without any customization as far as the `getAutocompleteResults` method is defined in the scope.
+All attributes are optional and everything should work fine without any customization as far as the `getAutocompleteResults` method is defined in the scope ([more](#providing-data)).
 
-**Searchmethod**
+### Providing data for the directive <span id="providing-data"></span>
+In order to obtain data, the directive calls scope function named `getAutocompleteResults` (name of the function can be changed via "searchMethod" option). It is up to you what logic you put into this function to get the data (i.e. searching within some static object or sending an HTTP request). 
+
+Two argument are passed to the function:
+* query string
+* a deferred object
+
+You are supposed to use the query string to perform your search and then resolve the deferred object with results data object. [See example](http://jsfiddle.net/jirikuchta/ac770wee/).
+
+All data you return will be accessible in the popup template, so put everything you want to display in the popup into it. There is one requirement on the structure of the data - the returned object has to contain `results` array which has objects as its items. Each item has one mandatory key `value` that holds the suggested string. Example:
+
+```javascript
+{
+  "results": [
+    {
+      "value": "foobar",
+      // any custom data
+    }
+  ]
+  // any custom data
+}
+```
 
 ## Events
 The directive emits following events allowing further customization:
@@ -72,7 +93,7 @@ The directive emits following events allowing further customization:
 * `sznAutocomplete-init`: emitted when the directive is initialized
 * `sznAutocomplete-show`: emitted each time the suggestions list shows
 * `sznAutocomplete-hide`: emitted each time the suggestions list hides
-* `sznAutocomplete-select`: emitted when some suggest item is selected. The selected value is passed in the event data object
+* `sznAutocomplete-select`: emitted when some suggest item is selected. The selected item data is passed in the event data object
 
 ## License
 
