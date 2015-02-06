@@ -1,3 +1,5 @@
+# (project is under development)
+
 # angular-szn-autocomplete
 An [AngularJS](https://github.com/angular/angular.js) directive providing suggestions as you type into text input.
 
