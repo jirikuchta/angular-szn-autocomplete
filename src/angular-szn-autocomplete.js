@@ -147,11 +147,6 @@
 						this._$timeout.cancel(this._delayTimeout);
 					}
 
-					if (this._dom.shadowInput) {
-						// temporary hide shadowInput to prevent visual glitches
-						this._dom.shadowInput.css("visibility", "hidden");	
-					}
-
 					// call for results after 
 					this._delayTimeout = this._$timeout((function () {
 						this._getResults(query);
@@ -172,6 +167,11 @@
 		if (this.constructor.IGNORED_KEYS.indexOf(e.keyCode) == -1) {
 			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) != -1) {
 				this._navigate(e);
+			} else {
+				if (this._dom.shadowInput) {
+					// temporary hide shadowInput to prevent visual glitches
+					this._dom.shadowInput.css("visibility", "hidden");	
+				}
 			}
 		}
 	};
