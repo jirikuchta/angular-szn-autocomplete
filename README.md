@@ -54,7 +54,7 @@ Settings set via element attributes have higher priority and override settings f
 **List of possible settings:**
 * **highlightFirst**: `(default: false)` Whether to automatically hightlight first item in suggestions results.
 * **shadowInput**: `(default: false)` <a id="shadowInput"></a> Whether to show a hint.
-* **onSelect**: Name of scope function to be called after selection. Allows to perform custom action upon selection. An selected item data will be passed to this function.
+* **onSelect**: A function, or name of scope function, to be called after selection. Allows to perform custom action upon selection. An selected item data will be passed to this function.
 * **searchMethod**: `(default: "getAutocompleteResults")` Allows set custom name of scope function that provides suggestions data. [Read more](#providing-data-for-the-directive). 
 * **popupParent**: `(default: input parent element)` A CSS selector of an element in which the popup should be appended into.
 * **shadowInputParent**: `(default: input parent element)` A CSS selector of an element in which the shadowInput should be appended into.

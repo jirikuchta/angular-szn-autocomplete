@@ -54,7 +54,7 @@
 		templateUrl: "angular-szn-autocomplete/template/default.html", // popup template URL
 		highlightFirst: false, 									// automatically highlight the first result in the popup?
 		shadowInput: false, 									// show the shadowInput?
-		onSelect: null, 										// a callback function to call after selection
+		onSelect: null, 										// a function, or name of scope function, to call after selection
 		searchMethod: "getAutocompleteResults", 				// name of scope method to call to get results
 		popupParent: "",										// CSS selector of element in which the results should be appended into (default is parent element of the main input)
 		shadowInputParent: "",									// CSS selector of element in which the shadowInput should be appended into (default is parent element of the main input)
@@ -141,12 +141,6 @@
 			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) == -1) {
 				var query = e.target.value;
 				if (query.length >= this._options.minLength) {
-
-					// cancel previous timeout
-					if (this._delayTimeout) {
-						this._$timeout.cancel(this._delayTimeout);
-					}
-
 					// call for results after 
 					this._delayTimeout = this._$timeout((function () {
 						this._getResults(query);
@@ -167,9 +161,16 @@
 		if (this.constructor.IGNORED_KEYS.indexOf(e.keyCode) == -1) {
 			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) != -1) {
 				this._navigate(e);
-			} else {
+			} else { 
+				// new search is about to be performed
+
+				// cancel previous timeout
+				if (this._delayTimeout) {
+					this._$timeout.cancel(this._delayTimeout);
+				}
+
+				// temporary hide shadowInput to prevent visual glitches
 				if (this._dom.shadowInput) {
-					// temporary hide shadowInput to prevent visual glitches
 					this._dom.shadowInput.css("visibility", "hidden");	
 				}
 			}
@@ -320,7 +321,11 @@
 
 		if (this._options.onSelect) {
 			// call the "onSelect" option callback
-			this._$scope[this._options.onSelect](item);
+			if (typeof this._options.onSelect == "string") {
+				this._$scope[this._options.onSelect](item);	
+			} else if (typeof this._options.onSelect == "function") {
+				this._options.onSelect(item);
+			}		
 		}
 	};
 
