@@ -1,0 +1,6 @@
+<ul ng-show="show" class="szn-autocomplete-results">
+	<li szn-autocomplete-result ng-repeat="result in results" ng-class="{selected: highlightIndex == $index}">
+		<div><span view-as-html="result.value | sznAutocompleteBoldMatch:query"></span><span class="wordcount"> ({{result.wordcount}} words)</span></span></div>
+		<p view-as-html="result.perex"></p>
+	</li>
+</ul>
