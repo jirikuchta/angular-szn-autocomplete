@@ -207,8 +207,8 @@
 					this._highlight(0);
 				}
 
-				// propage actual query into popup scope. Will be used for bolding string matches.
-				this._popupScope.query = this._$scope[this._$attrs["ngModel"]];
+				// propagete actual query into popup scope. Will be used for bolding string matches.
+				this._popupScope.query = this._dom.input[0].value;
 
 				if (this._options.shadowInput) {
 					this._popupScope.shadowInputValue = "";
@@ -521,7 +521,7 @@
 
 			return parts.join("");
 		};
-	 });
+	});
 
 	/**
 	 * Shadow input template
