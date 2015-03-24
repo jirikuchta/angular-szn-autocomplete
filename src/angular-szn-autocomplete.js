@@ -98,7 +98,7 @@
 	SznAutocompleteLink.prototype._init = function () {
 		this._getTemplate()
 			.then((function (template) {
-				this._dom.popupCont = angular.element(this._$compile(this._$templateCache.get(this._options.templateUrl))(this._popupScope));
+				this._dom.popupCont = angular.element(this._$compile(template)(this._popupScope));
 				this._dom.popupParent.append(this._dom.popupCont);
 
 				if (this._options.shadowInput) {
