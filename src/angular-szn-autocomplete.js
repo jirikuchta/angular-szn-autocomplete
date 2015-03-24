@@ -2,7 +2,7 @@
  * An AngularJS directive to display suggestions while typing into text input.
  *
  * @author Jiri Kuchta <jiri.kuchta@live.com>
- * @version 1.0.0
+ * @version 1.0.2
  *
  */
 (function () {
@@ -141,7 +141,7 @@
 			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) == -1) {
 				var query = e.target.value;
 				if (query.length >= this._options.minLength) {
-					// call for results after 
+					// call for results after
 					this._delayTimeout = this._$timeout((function () {
 						this._getResults(query);
 					}).bind(this), this._options.delay);
@@ -161,7 +161,7 @@
 		if (this.constructor.IGNORED_KEYS.indexOf(e.keyCode) == -1) {
 			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) != -1) {
 				this._navigate(e);
-			} else { 
+			} else {
 				// new search is about to be performed
 
 				// cancel previous timeout
@@ -171,7 +171,7 @@
 
 				// temporary hide shadowInput to prevent visual glitches
 				if (this._dom.shadowInput) {
-					this._dom.shadowInput.css("visibility", "hidden");	
+					this._dom.shadowInput.css("visibility", "hidden");
 				}
 			}
 		}
@@ -279,7 +279,10 @@
 					this._hide(true);
 				break;
 				case 13: // ENTER
-					this._select();
+					var item = this._popupScope.results[this._popupScope.highlightIndex];
+					if (item) {
+						this._select(item);
+					}
 				break;
 				case 38: // UP
 					e.preventDefault();
@@ -322,10 +325,10 @@
 		if (this._options.onSelect) {
 			// call the "onSelect" option callback
 			if (typeof this._options.onSelect == "string") {
-				this._$scope[this._options.onSelect](item);	
+				this._$scope[this._options.onSelect](item);
 			} else if (typeof this._options.onSelect == "function") {
 				this._options.onSelect(item);
-			}		
+			}
 		}
 	};
 
