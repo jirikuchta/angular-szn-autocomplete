@@ -96,6 +96,10 @@ The directive emits following events allowing further customization:
 * `sznAutocomplete-hide`: emitted each time the suggestions list hides
 * `sznAutocomplete-select`: emitted when some suggest item is selected. The selected item data is passed in the event data object
 
+## Validation
+`ngModel`/form-based validations are taken into account. Should the input field be invalid when typing in a query,
+ the request is not sent; a previously shown results list is also hidden.
+
 ## License
 
 Licensed under the MIT license
