@@ -2,6 +2,7 @@
  * An AngularJS directive to display suggestions while typing into text input.
  *
  * @author Jiri Kuchta <jiri.kuchta@live.com>
+ * @author Cosmin Pitu <cosmin.pitu@gmail.com>
  * @version 1.0.2
  *
  */
@@ -33,6 +34,7 @@
 			this._popupScope = this._$scope.$new(true);
 			this._popupScope.show = false;
 			this._popupScope.highlightIndex = -1;
+            this._popupScope.highlightMatch = this._options.boldHighlightsMatch;
 
 			this._dom = {
 				input: $elm,
@@ -61,7 +63,8 @@
 		delay: 100, 											// time in ms to wait before calling for results
 		minLength: 1,											// minimal number of character that needs to be entered to search for results
 		uniqueId: null,											// this ID will be passed as an argument in every event to easily identify this instance (in case there are multiple instances on the page)
-		boldMatches: true										// bold matches in results?
+		boldMatches: true,										// bold matches in results?
+        boldHighlightsMatch: false                              // should the bold text shown in results list highlight either the match (true) or the other, "unmatched" text (false)
 	};
 
 	SznAutocompleteLink.IGNORED_KEYS = [16, 17, 18, 20, 37];
@@ -134,7 +137,7 @@
 	/**
 	 * Handles keyup event
 	 * Calls for suggestions when every conditions are met.
-	 * @param {object} event
+	 * @param {Event} e
 	 */
 	SznAutocompleteLink.prototype._keyup = function (e) {
 		if (this.constructor.IGNORED_KEYS.indexOf(e.keyCode) == -1) {
@@ -155,7 +158,7 @@
 
 	/**
 	 * Handles keypress event
-	 * @param {object} event
+	 * @param {Event} e
 	 */
 	SznAutocompleteLink.prototype._keydown = function (e) {
 		if (this.constructor.IGNORED_KEYS.indexOf(e.keyCode) == -1) {
@@ -242,7 +245,7 @@
 
 	/**
 	 * Hide the popup
-	 * @param {bool} digest Trigger $digest cycle?
+	 * @param {boolean} digest Trigger $digest cycle?
 	 */
 	SznAutocompleteLink.prototype._hide = function (digest) {
 		if (this._popupScope.show) {
@@ -304,7 +307,7 @@
 						this._copyFromShadow();
 					}
 				break;
-			};
+			}
 		}
 	};
 
@@ -346,7 +349,7 @@
 	/**
 	 * Highlights a popup item
 	 * @param {int} index An index of results item to be highlighted
-	 * @param {bool} digest Trigger $digest cycle?
+	 * @param {boolean} digest Trigger $digest cycle?
 	 */
 	SznAutocompleteLink.prototype._highlight = function (index, digest) {
 		this._popupScope.highlightIndex = index;
@@ -400,14 +403,14 @@
 		}
 
 		// set input value and call for new results
-		var query = queryWords.join(" ")
+		var query = queryWords.join(" ");
 		this._$scope[this._$attrs["ngModel"]] = query;
 		this._getResults(query);
 	};
 
 	/**
 	 * Gets popup template
-	 * @return {promise}
+	 * @return {Promise}
 	 */
 	SznAutocompleteLink.prototype._getTemplate = function () {
 		var deferred = this._$q.defer();
@@ -418,7 +421,7 @@
 		} else {
 			this._$http.get(this._options.templateUrl)
 				.success((function (deferred, data) { deferred.resolve(data); }).bind(this, deferred))
-				.error((function (deferred, data) { throw new Error("angular-szn-autocomplete: Failed to load template \"" + this._options.templateUrl + "\".") }).bind(this));
+				.error((function () { throw new Error("angular-szn-autocomplete: Failed to load template \"" + this._options.templateUrl + "\".") }).bind(this));
 		}
 
 		return deferred.promise;
@@ -510,21 +513,29 @@
 	/**
 	 * Filter to bold search query matches in popup items
 	 */
-	ngModule.filter("sznAutocompleteBoldMatch", function() {
-		return function(matchItem, query) {
-			var i = matchItem.toLowerCase().indexOf(query.toLowerCase());
-			if (i < 0) {
-				return matchItem;
-			}
+    ngModule.filter("sznAutocompleteBoldMatch", function() {
+        return function(matchItem, query, boldHighlightsMatch) {
+            var i = matchItem.toLowerCase().indexOf(query.toLowerCase());
+            if (i < 0) {
+                return matchItem;
+            }
 
-			var parts = [];
-			parts.push("<b>" + matchItem.substring(0, i) + "</b>");
-			parts.push(matchItem.substring(i, i + query.length));
-			parts.push("<b>" + matchItem.substring(i + query.length) + "</b>");
+            var tags = {
+                bold: { open: "<b>", close: "</b>" },
+                match: { open: "<span class='szn-autocomplete-match'>", close: "</span>" }
+            };
 
-			return parts.join("");
-		};
-	});
+            var ignoredTagKey = boldHighlightsMatch ? "bold" : "match";
+            tags[ignoredTagKey].open = tags[ignoredTagKey].close = "";
+
+            var parts = [];
+            parts.push(tags.bold.open  + matchItem.substring(0, i)                + tags.bold.close);
+            parts.push(tags.match.open + matchItem.substring(i, i + query.length) + tags.match.close);
+            parts.push(tags.bold.open  + matchItem.substring(i + query.length)    + tags.bold.close);
+
+            return parts.join("");
+        };
+    });
 
 	/**
 	 * Shadow input template
@@ -542,7 +553,7 @@
 		$templateCache.put("angular-szn-autocomplete/template/default.html",
 			'<ul ng-show="show" class="szn-autocomplete-results" ng-class="{loading: loading}">\n' +
 				'<li szn-autocomplete-result ng-repeat="result in results" ng-class="{selected: highlightIndex == $index}">\n' +
-					'<span ng-if="boldMatches" view-as-html="result.value | sznAutocompleteBoldMatch:query"></span>\n' +
+					'<span ng-if="boldMatches" view-as-html="result.value | sznAutocompleteBoldMatch:query:highlightMatch"></span>\n' +
 					'<span ng-if="!boldMatches">{{result.value}}</span>\n' +
 				'</li>\n' +
 			'</ul>'
