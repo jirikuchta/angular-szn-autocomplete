@@ -11,7 +11,7 @@
 
 	var ngModule = angular.module( "angular-szn-autocomplete", ["angular-szn-autocomplete/template/shadowinput.html", "angular-szn-autocomplete/template/default.html"]);
 
-	var SznAutocompleteLink = function ($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs) {
+	var SznAutocompleteLink = function ($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs, ngModel) {
 		this._$q = $q;
 		this._$timeout = $timeout;
 		this._$http = $http;
@@ -19,6 +19,7 @@
 		this._$templateCache = $templateCache;
 		this._$scope = $scope;
 		this._$attrs = $attrs;
+		this._ngModelCtrl = ngModel;
 
 		this._$scope.$evalAsync((function ($elm) {
 
@@ -140,6 +141,8 @@
 	 * @param {Event} e
 	 */
 	SznAutocompleteLink.prototype._keyup = function (e) {
+		if (this._hideIfInvalid()) { return };
+
 		if (this.constructor.IGNORED_KEYS.indexOf(e.keyCode) == -1) {
 			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) == -1) {
 				var query = e.target.value;
@@ -161,6 +164,8 @@
 	 * @param {Event} e
 	 */
 	SznAutocompleteLink.prototype._keydown = function (e) {
+		if (this._hideIfInvalid()) { return; }
+
 		if (this.constructor.IGNORED_KEYS.indexOf(e.keyCode) == -1) {
 			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) != -1) {
 				this._navigate(e);
@@ -178,6 +183,13 @@
 				}
 			}
 		}
+	};
+
+	SznAutocompleteLink.prototype._hideIfInvalid = function() {
+		var isInvalid = (Object.getOwnPropertyNames(this._ngModelCtrl.$error).length > 0);
+		if (isInvalid) { this._hide(true); }
+
+		return isInvalid;
 	};
 
 	/**
@@ -466,8 +478,8 @@
 		return {
 			restrict: "AC",
 			require: 'ngModel',
-			link: function ($scope, $elm, $attrs) {
-				return new SznAutocompleteLink($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs);
+			link: function ($scope, $elm, $attrs, ngModel) {
+				return new SznAutocompleteLink($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs, ngModel);
 			}
 		};
 	}]);
@@ -521,7 +533,7 @@
             }
 
             var tags = {
-                bold: { open: "<b>", close: "</b>" },
+                bold:  { open: "<b>", close: "</b>" },
                 match: { open: "<span class='szn-autocomplete-match'>", close: "</span>" }
             };
 
