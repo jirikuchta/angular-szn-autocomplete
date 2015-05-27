@@ -32,7 +32,5 @@ input.szn-autocomplete-shadow-input {
 }
 
 .szn-autocomplete-results li .szn-autocomplete-match {
-    vertical-align: baseline;
     font-weight: bold;
-    color: #fff;
 }
