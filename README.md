@@ -60,6 +60,7 @@ Settings set via element attributes have higher priority and override settings f
 * **minLength**: `(default: 1)` Number of characters that needs to be entered before the directive does any work.
 * **uniqueId**: an unique ID that will be used as an idenficator in emitted events. Comes handy when you have multiple instances of the directive on the page and need to identify which instance emitted particular event.
 * **boldMatches**: `(default: true)` Should the matches in suggestion be bold?
+* **boldHighlightsMatch**: `(default: false)` Should the matched part of a suggestion be bold or not (in which case, all *but* the matched part is displayed in bold)?
 * **templateUrl**: Path to your custom template.
 
 All attributes are optional and everything should work fine without any customization as far as the `getAutocompleteResults` method is defined in the scope ([more](#providing-data-for-the-directive)).
@@ -94,6 +95,10 @@ The directive emits following events allowing further customization:
 * `sznAutocomplete-show`: emitted each time the suggestions list shows
 * `sznAutocomplete-hide`: emitted each time the suggestions list hides
 * `sznAutocomplete-select`: emitted when some suggest item is selected. The selected item data is passed in the event data object
+
+## Validation
+`ngModel`/form-based validations are taken into account. Should the input field be invalid when typing in a query,
+ the request is not sent; a previously shown results list is also hidden.
 
 ## License
 

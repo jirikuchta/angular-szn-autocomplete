@@ -30,3 +30,7 @@ input.szn-autocomplete-shadow-input {
 	background: Highlight;
 	color: HighlightText;
 }
+
+.szn-autocomplete-results li .szn-autocomplete-match {
+    font-weight: bold;
+}
