@@ -11,7 +11,7 @@ Features:
 
 **Requirements:** AngularJS **1.2.x** or **1.3.x**
 
-**File size**: 2.42KB gzipped (8.55KB uncompressed)
+**File Size:** 16.76KB (2.46KB compiled and gzipped)
 
 ## Examples
 * [Basic usage](http://jsfiddle.net/jirikuchta/ac770wee/)
