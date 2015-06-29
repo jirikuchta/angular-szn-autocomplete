@@ -61,12 +61,14 @@
 		delay: 100, 											// time in ms to wait before calling for results
 		minLength: 1,											// minimal number of character that needs to be entered to search for results
 		uniqueId: null,											// this ID will be passed as an argument in every event to easily identify this instance (in case there are multiple instances on the page)
-		boldMatches: true										// bold matches in results?
+		boldMatches: true,										// bold matches in results?
+		hideResultsOnEnter: false                               // hide result on enter
 	};
 
 	SznAutocompleteLink.IGNORED_KEYS = [16, 17, 18, 20, 37];
 
 	SznAutocompleteLink.NAVIGATION_KEYS = [13, 27, 9, 38, 39, 40];
+	SznAutocompleteLink.ENTER_KEY = 13;
 
 	/**
 	 * Get the directive configuration.
@@ -134,11 +136,14 @@
 	/**
 	 * Handles keyup event
 	 * Calls for suggestions when every conditions are met.
-	 * @param {object} event
+	 * @param {object} e
 	 */
 	SznAutocompleteLink.prototype._keyup = function (e) {
 		if (this.constructor.IGNORED_KEYS.indexOf(e.keyCode) == -1) {
-			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) == -1) {
+			if(this._options.hideResultsOnEnter === "true" && e.keyCode === this.constructor.ENTER_KEY) {
+				this._hide(true);
+			}
+			else if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) == -1) {
 				var query = e.target.value;
 				if (query.length >= this._options.minLength) {
 					// call for results after
