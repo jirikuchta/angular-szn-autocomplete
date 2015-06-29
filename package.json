@@ -1,6 +1,6 @@
 {
 	"name": "angular-szn-autocomplete",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "An AngularJS directive to display suggestions while typing into text input.",
 	"main": "src/angular-szn-autocomplete.js",
 	"scripts": {

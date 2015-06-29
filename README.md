@@ -61,6 +61,7 @@ Settings set via element attributes have higher priority and override settings f
 * **uniqueId**: an unique ID that will be used as an idenficator in emitted events. Comes handy when you have multiple instances of the directive on the page and need to identify which instance emitted particular event.
 * **boldMatches**: `(default: true)` Should the matches in suggestion be bold?
 * **templateUrl**: Path to your custom template.
+* **hideResultsOnEnter**: (default false) Hides the result list when enter is pressed in input
 
 All attributes are optional and everything should work fine without any customization as far as the `getAutocompleteResults` method is defined in the scope ([more](#providing-data-for-the-directive)).
 
