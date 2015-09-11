@@ -132,26 +132,43 @@
 	};
 
 	/**
+	 * Handles paste event
+	 * @param {object} event
+	 */
+	SznAutocompleteLink.prototype._paste = function (e) {
+		var str = (e.originalEvent || e).clipboardData.getData('text/plain');
+		var self = this;
+		if(str.length > 0) this._$timeout(function(){
+			self._doQuery(e.target.value);
+		});
+	}
+	/**
 	 * Handles keyup event
-	 * Calls for suggestions when every conditions are met.
 	 * @param {object} event
 	 */
 	SznAutocompleteLink.prototype._keyup = function (e) {
 		if (this.constructor.IGNORED_KEYS.indexOf(e.keyCode) == -1) {
 			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) == -1) {
 				var query = e.target.value;
-				if (query.length >= this._options.minLength) {
-					// call for results after
-					this._delayTimeout = this._$timeout((function () {
-						this._getResults(query);
-					}).bind(this), this._options.delay);
-				} else {
-					// not enough number of characters
-					this._hide(true);
-				}
+				this._doQuery(query);
 			}
 		}
 	};
+	/**
+	 * Calls for suggestions when every conditions are met.
+	 * @param {string} query
+	 */
+	SznAutocompleteLink.prototype._doQuery = function(query){
+		if (query.length >= this._options.minLength) {
+			// call for results after
+			this._delayTimeout = this._$timeout((function () {
+				this._getResults(query);
+			}).bind(this), this._options.delay);
+		} else {
+			// not enough number of characters
+			this._hide(true);
+		}
+	}
 
 	/**
 	 * Handles keypress event
