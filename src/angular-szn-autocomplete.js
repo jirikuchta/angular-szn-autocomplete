@@ -283,6 +283,7 @@
 					if (item) {
 						this._select(item);
 					}
+					this._hide(true);
 				break;
 				case 38: // UP
 					e.preventDefault();
