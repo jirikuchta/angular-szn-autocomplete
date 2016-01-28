@@ -19,7 +19,7 @@
 		this._$scope = $scope;
 		this._$attrs = $attrs;
 
-		this._$scope.$evalAsync((function ($elm) {
+		$timeout((function ($elm) {
 
 			this._options = this._getOptions();
 
@@ -46,7 +46,7 @@
 			this._$scope.$on("$destroy", this._destroy.bind(this));
 
 			this._init();
-		}).bind(this, $elm));
+		}).bind(this, $elm), 200);
 	};
 
 	// default configuration
