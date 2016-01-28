@@ -383,7 +383,7 @@
 	SznAutocompleteLink.prototype._getMoveIndex = function (direction) {
 		var index = this._popupScope.highlightIndex + direction;
 		if (index > this._popupScope.results.length - 1) {
-			index = 1;
+			index = this._options.highlightFirstIndex;
 		} else if (index < 0) {
 			index = this._popupScope.results.length - 1;
 		}
