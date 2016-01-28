@@ -11,7 +11,7 @@ Features:
 
 **Requirements:** AngularJS **1.2.x** or **1.3.x**
 
-**File Size:** 16.76KB (2.46KB compiled and gzipped)
+**File size**: 2.42KB gzipped (8.55KB uncompressed)
 
 ## Examples
 * [Basic usage](http://jsfiddle.net/jirikuchta/ac770wee/)
@@ -42,7 +42,7 @@ There are two ways how to configure the directive. Either you can pass a configu
 ```html
 <input type="text" ng-model="query" szn-autocomplete="options">
 ```
-or configure the directive via element attributes. For example: 
+or configure the directive via element attributes. For example:
 ```html
 <input type="text" ng-model="query" szn-autocomplete highlight-first="true">
 ```
@@ -51,9 +51,10 @@ Settings set via element attributes have higher priority and override settings f
 
 **List of possible settings:**
 * **highlightFirst**: `(default: false)` Whether to automatically hightlight first item in suggestions results.
+* **highlightFirstIndex**: `(default: 0)` Used when hightlighting the first item in the result popup to specify the index to highlight first.
 * **shadowInput**: `(default: false)` <a id="shadowInput"></a> Whether to show a hint.
 * **onSelect**: A function, or name of scope function, to be called after selection. Allows to perform custom action upon selection. An selected item data will be passed to this function.
-* **searchMethod**: `(default: "getAutocompleteResults")` Allows set custom name of scope function that provides suggestions data. [Read more](#providing-data-for-the-directive). 
+* **searchMethod**: `(default: "getAutocompleteResults")` Allows set custom name of scope function that provides suggestions data. [Read more](#providing-data-for-the-directive).
 * **popupParent**: `(default: input parent element)` A CSS selector of an element in which the popup should be appended into.
 * **shadowInputParent**: `(default: input parent element)` A CSS selector of an element in which the shadowInput should be appended into.
 * **delay**: `(default: 100)` Time in ms to wait before calling the `searchMethod`.
@@ -65,7 +66,7 @@ Settings set via element attributes have higher priority and override settings f
 All attributes are optional and everything should work fine without any customization as far as the `getAutocompleteResults` method is defined in the scope ([more](#providing-data-for-the-directive)).
 
 ### Providing data for the directive
-In order to obtain data, the directive calls scope function named `getAutocompleteResults` (name of the function can be changed via "searchMethod" option). It is up to you what logic you put into this function to get the data (i.e. searching within some static object or sending an HTTP request). 
+In order to obtain data, the directive calls scope function named `getAutocompleteResults` (name of the function can be changed via "searchMethod" option). It is up to you what logic you put into this function to get the data (i.e. searching within some static object or sending an HTTP request).
 
 Two argument are passed to the function:
 * query string
@@ -86,6 +87,22 @@ All data you return will be accessible in the popup template, so put everything 
   // any custom data
 }
 ```
+
+You can specify if an item is selectable or not by adding a key `disable` set to true. Example:
+
+```javascript
+{
+  "results": [
+    {
+      "value": "foobar",
+      "disable": true,
+      // any custom data
+    }
+  ]
+  // any custom data
+}
+```
+
 
 ## Events
 The directive emits following events allowing further customization:

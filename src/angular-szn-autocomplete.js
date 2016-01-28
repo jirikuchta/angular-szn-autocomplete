@@ -19,7 +19,7 @@
 		this._$scope = $scope;
 		this._$attrs = $attrs;
 
-		$timeout((function ($elm) {
+		this._$scope.$evalAsync((function ($elm) {
 
 			this._options = this._getOptions();
 
@@ -46,13 +46,14 @@
 			this._$scope.$on("$destroy", this._destroy.bind(this));
 
 			this._init();
-		}).bind(this, $elm), 200);
+		}).bind(this, $elm));
 	};
 
 	// default configuration
 	SznAutocompleteLink.DEFAULT_OPTIONS = {
 		templateUrl: "angular-szn-autocomplete/template/default.html", // popup template URL
 		highlightFirst: false, 									// automatically highlight the first result in the popup?
+		highlightFirstIndex: 0, 							    // The index of the first result in the popup for the highlightFirst option, default to '0'.
 		shadowInput: false, 									// show the shadowInput?
 		onSelect: null, 										// a function, or name of scope function, to call after selection
 		searchMethod: "getAutocompleteResults", 				// name of scope method to call to get results
@@ -204,7 +205,7 @@
 				this._show();
 
 				if (this._options.highlightFirst) {
-					this._highlight(0);
+					this._highlight(this._options.highlightFirstIndex);
 				}
 
 				// propagete actual query into popup scope. Will be used for bolding string matches.
@@ -363,6 +364,13 @@
 		}
 
 		var i = this._getMoveIndex(direction);
+
+		// If result is 'disable' then skip it
+		if (this._popupScope.results[i].disable) {
+			direction > 0 ? direction = 2 : direction = -2;
+			i = this._getMoveIndex(direction);
+		}
+
 		this._highlight(i, true);
 		this._setValue(this._popupScope.results[i].value);
 	};
@@ -375,7 +383,7 @@
 	SznAutocompleteLink.prototype._getMoveIndex = function (direction) {
 		var index = this._popupScope.highlightIndex + direction;
 		if (index > this._popupScope.results.length - 1) {
-			index = 0;
+			index = 1;
 		} else if (index < 0) {
 			index = this._popupScope.results.length - 1;
 		}
