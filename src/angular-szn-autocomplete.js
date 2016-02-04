@@ -55,6 +55,7 @@
 		highlightFirst: false, 									// automatically highlight the first result in the popup?
 		highlightFirstIndex: 0, 							    // The index of the first result in the popup for the highlightFirst option, default to '0'.
 		shadowInput: false, 									// show the shadowInput?
+		linear: false, 									        // keydown not going to the first item when reaching the last menu item. Keyup not going to the last item when reaching the first item. no loop
 		onSelect: null, 										// a function, or name of scope function, to call after selection
 		searchMethod: "getAutocompleteResults", 				// name of scope method to call to get results
 		popupParent: "",										// CSS selector of element in which the results should be appended into (default is parent element of the main input)
@@ -366,13 +367,17 @@
 		var i = this._getMoveIndex(direction);
 
 		// If result is 'disable' then skip it
-		if (this._popupScope.results[i].disable) {
-			direction > 0 ? direction = 2 : direction = -2;
-			i = this._getMoveIndex(direction);
+		if (i > -1) {
+			if (this._popupScope.results[i].disable) {
+				direction > 0 ? direction = 2 : direction = -2;
+				i = this._getMoveIndex(direction);
+			}
 		}
 
 		this._highlight(i, true);
-		this._setValue(this._popupScope.results[i].value);
+		if (i > -1) {
+			this._setValue(this._popupScope.results[i].value);
+		}
 	};
 
 	/**
@@ -383,9 +388,17 @@
 	SznAutocompleteLink.prototype._getMoveIndex = function (direction) {
 		var index = this._popupScope.highlightIndex + direction;
 		if (index > this._popupScope.results.length - 1) {
-			index = this._options.highlightFirstIndex;
+			if (!this._options.linear) {
+				index = this._options.highlightFirstIndex;
+			} else {
+				index = -1;
+			}
 		} else if (index < 0) {
-			index = this._popupScope.results.length - 1;
+			if (!this._options.linear) {
+				index = this._popupScope.results.length - 1;
+			} else {
+				index = -1;
+			}
 		}
 
 		return index;
