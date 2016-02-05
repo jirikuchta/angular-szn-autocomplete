@@ -403,8 +403,6 @@
 		if (index > this._popupScope.results.length - 1) {
 			if (!this._options.linear) {
 				index = this._options.highlightFirstIndex;
-			} else {
-				index = -1;
 			}
 		} else if (index < 0) {
 			if (!this._options.linear) {
