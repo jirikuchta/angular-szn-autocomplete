@@ -56,6 +56,7 @@
 		highlightFirstIndex: 0, 							    // The index of the first result in the popup for the highlightFirst option, default to '0'.
 		shadowInput: false, 									// show the shadowInput?
 		linear: false, 									        // keydown not going to the first item when reaching the last menu item. Keyup not going to the last item when reaching the first item. no loop
+		noResult: false,                                        // Don't display the no result message
 		onSelect: null, 										// a function, or name of scope function, to call after selection
 		searchMethod: "getAutocompleteResults", 				// name of scope method to call to get results
 		popupParent: "",										// CSS selector of element in which the results should be appended into (default is parent element of the main input)
@@ -194,8 +195,20 @@
 
 				// there are no results. Hide popup.
 				if (!data.results || !data.results.length) {
-					this._hide();
-					return;
+					if (!this._options.noResult) {
+						this._hide();
+						return;
+					} else {
+						// reset the results array
+						this._popupScope.results = [];
+
+						// propagete actual query into popup scope. Will be used for bolding string matches.
+						this._popupScope.query = this._dom.input[0].value;
+
+						this._show();
+						this._popupScope.loading = false;
+						return;
+					}
 				}
 
 				// all returned data are available in the popup scope
