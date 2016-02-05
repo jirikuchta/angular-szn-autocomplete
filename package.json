@@ -8,7 +8,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/eouin/angular-szn-autocomplete.git"
+		"url": "https://github.com/eouin/angular-szn-autocomplete-build.git"
 	},
 	"keywords": [
 		"angular",
@@ -24,6 +24,6 @@
 	}],
 	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/eouin/angular-szn-autocomplete/issues"
+		"url": "https://github.com/eouin/angular-szn-autocomplete-build/issues"
 	}
 }
