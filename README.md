@@ -1,4 +1,13 @@
-# angular-szn-autocomplete
+# angular-szn-autocomplete-build
+
+This is a fork of Jiří Kuchta's angular-szn-autocomplete (https://github.com/jirikuchta/angular-szn-autocomplete) with a bit of tweaks such as:
+
+* allow disable state for an item in the result dropdown menu
+* allow a dropdown menu linear navigation or not with UP/DOWN key
+* Allow to display a no result container in the dropdown result menu when therse is no result returned.
+
+##Description
+
 An [AngularJS](https://github.com/angular/angular.js) directive providing suggestions as you type into text input.
 
 Features:
