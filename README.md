@@ -3,8 +3,8 @@
 This is a fork of Jiří Kuchta's angular-szn-autocomplete (https://github.com/jirikuchta/angular-szn-autocomplete) with a bit of tweaks such as:
 
 * allow disable state for an item in the result dropdown menu
-* allow a dropdown menu linear navigation or not with UP/DOWN key
-* Allow to display a no result container in the dropdown result menu when therse is no result returned.
+* allow a dropdown menu linear navigation or not with UP/DOWN key (keydown not going to the first item when reaching the last menu item. Keyup not going to the last item when reaching the first item. no loop)
+* Allow to display a no result container in the dropdown result menu when there is no result returned.
 
 ##Description
 
