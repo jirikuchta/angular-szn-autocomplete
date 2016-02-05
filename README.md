@@ -61,6 +61,8 @@ Settings set via element attributes have higher priority and override settings f
 **List of possible settings:**
 * **highlightFirst**: `(default: false)` Whether to automatically hightlight first item in suggestions results.
 * **highlightFirstIndex**: `(default: 0)` Used when hightlighting the first item in the result popup to specify the index to highlight first.
+* **linear**: `(default: false)`  keydown not going to the first item when reaching the last menu item. Keyup not going to the last item when reaching the first item. no loop
+* **noResult**: `(default: false)`  Don't display the no result message
 * **shadowInput**: `(default: false)` <a id="shadowInput"></a> Whether to show a hint.
 * **onSelect**: A function, or name of scope function, to be called after selection. Allows to perform custom action upon selection. An selected item data will be passed to this function.
 * **searchMethod**: `(default: "getAutocompleteResults")` Allows set custom name of scope function that provides suggestions data. [Read more](#providing-data-for-the-directive).
