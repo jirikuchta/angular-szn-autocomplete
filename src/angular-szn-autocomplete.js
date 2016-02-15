@@ -297,6 +297,8 @@
 					var item = this._popupScope.results[this._popupScope.highlightIndex];
 					if (item) {
 						this._select(item);
+					} else {
+						this._hide(true);
 					}
 				break;
 				case 38: // UP
@@ -328,21 +330,26 @@
 	 * @param {object} item Scope data of selected item
 	 */
 	SznAutocompleteLink.prototype._select = function (item) {
-		if (item) { this._setValue(item.value); }
+		if (!item.disable) {
+			if (item) {
+				this._setValue(item.value);
+			}
 
-		this._$scope.$emit("sznAutocomplete-select", {
-			instanceId: this._options.uniqueId,
-			itemData: item
-		});
+			this._$scope.$emit("sznAutocomplete-select", {
+				instanceId: this._options.uniqueId,
+				itemData: item
+			});
 
-		this._hide(true);
+			this._hide(true);
 
-		if (this._options.onSelect) {
-			// call the "onSelect" option callback
-			if (typeof this._options.onSelect == "string") {
-				this._$scope[this._options.onSelect](item);
-			} else if (typeof this._options.onSelect == "function") {
-				this._options.onSelect(item);
+			if (this._options.onSelect) {
+				// call the "onSelect" option callback
+				if (typeof this._options.onSelect == "string") {
+					this._$scope[this._options.onSelect](item);
+				}
+				else if (typeof this._options.onSelect == "function") {
+					this._options.onSelect(item);
+				}
 			}
 		}
 	};
