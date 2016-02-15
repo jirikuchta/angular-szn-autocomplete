@@ -122,7 +122,9 @@
 				this._dom.input.bind("blur", (function () {
 					// when we click on some item in popup the blur event is fired
 					// before the item can be selected. So we have to wait a little.
-					this._$timeout(this._hide.bind(this, true), 200);
+					this._$timeout(function() {
+						this._hide.bind(this, true);
+					}, 200);
 				}).bind(this));
 
 				// we need some methods and variables to be accessible within isolated popup scope
@@ -351,6 +353,9 @@
 					this._options.onSelect(item);
 				}
 			}
+		}
+		else {
+			this._show();
 		}
 	};
 
