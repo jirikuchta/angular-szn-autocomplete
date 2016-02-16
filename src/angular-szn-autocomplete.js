@@ -122,9 +122,7 @@
 				this._dom.input.bind("blur", (function () {
 					// when we click on some item in popup the blur event is fired
 					// before the item can be selected. So we have to wait a little.
-					this._$timeout(function() {
-						this._hide.bind(this, true);
-					}, 200);
+					this._$timeout(this._hide.bind(this, true), 200);
 				}).bind(this));
 
 				// we need some methods and variables to be accessible within isolated popup scope
@@ -262,27 +260,42 @@
 	 * @param {bool} digest Trigger $digest cycle?
 	 */
 	SznAutocompleteLink.prototype._hide = function (digest) {
-		if (this._popupScope.show) {
-			if (this._delayTimeout) {
-				this._$timeout.cancel(this._delayTimeout);
+
+		if (this._popupScope.highlightIndex >= 0) {
+			var item = this._popupScope.results[this._popupScope.highlightIndex];
+			if (item && item.disable) {
+				return;
 			}
-
-			if (this._deferredResults) {
-				this._deferredResults.reject();
-			}
-
-			this._popupScope.show = false;
-			this._popupScope.loading = true;
-			this._popupScope.highlightIndex = -1;
-
-			if (this._options.shadowInput) {
-				this._popupScope.shadowInputValue = "";
-			}
-
-			if (digest) { this._popupScope.$digest(); }
-
-			this._$scope.$emit("sznAutocomplete-hide", {instanceId: this._options.uniqueId});
 		}
+		else {
+			if (this._popupScope.show) {
+
+				if (this._delayTimeout) {
+					this._$timeout.cancel(this._delayTimeout);
+				}
+
+				if (this._deferredResults) {
+					this._deferredResults.reject();
+				}
+
+				this._popupScope.show = false;
+				this._popupScope.loading = true;
+				this._popupScope.highlightIndex = -1;
+
+				if (this._options.shadowInput) {
+					this._popupScope.shadowInputValue = "";
+				}
+
+				if (digest) {
+					this._popupScope.$digest();
+				}
+
+				this._$scope.$emit("sznAutocomplete-hide", {
+					instanceId: this._options.uniqueId
+				});
+			}
+		}
+
 	};
 
 	/**
@@ -297,9 +310,10 @@
 				break;
 				case 13: // ENTER
 					var item = this._popupScope.results[this._popupScope.highlightIndex];
-					if (item) {
+					if (item && !item.disable) {
 						this._select(item);
 					} else {
+						this._popupScope.highlightIndex = -1;
 						this._hide(true);
 					}
 				break;
