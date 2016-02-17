@@ -261,40 +261,40 @@
 	 */
 	SznAutocompleteLink.prototype._hide = function (digest) {
 
-		if (this._popupScope.highlightIndex >= 0) {
+		if (this._popupScope.highlightIndex > -1) {
 			var item = this._popupScope.results[this._popupScope.highlightIndex];
 			if (item && item.disable) {
 				return;
 			}
 		}
-		else {
-			if (this._popupScope.show) {
 
-				if (this._delayTimeout) {
-					this._$timeout.cancel(this._delayTimeout);
-				}
+		if (this._popupScope.show) {
 
-				if (this._deferredResults) {
-					this._deferredResults.reject();
-				}
-
-				this._popupScope.show = false;
-				this._popupScope.loading = true;
-				this._popupScope.highlightIndex = -1;
-
-				if (this._options.shadowInput) {
-					this._popupScope.shadowInputValue = "";
-				}
-
-				if (digest) {
-					this._popupScope.$digest();
-				}
-
-				this._$scope.$emit("sznAutocomplete-hide", {
-					instanceId: this._options.uniqueId
-				});
+			if (this._delayTimeout) {
+				this._$timeout.cancel(this._delayTimeout);
 			}
+
+			if (this._deferredResults) {
+				this._deferredResults.reject();
+			}
+
+			this._popupScope.show = false;
+			this._popupScope.loading = true;
+			this._popupScope.highlightIndex = -1;
+
+			if (this._options.shadowInput) {
+				this._popupScope.shadowInputValue = "";
+			}
+
+			if (digest) {
+				this._popupScope.$digest();
+			}
+
+			this._$scope.$emit("sznAutocomplete-hide", {
+				instanceId: this._options.uniqueId
+			});
 		}
+
 
 	};
 
@@ -547,9 +547,10 @@
 						$scope.highlight(-1, true);
 					}
 				}).bind(this));
-				$elm.on("click", (function () {
+				$elm.on("click", (function (event) {
 					// select this result
 					$scope.select($scope.results[$scope.$index]);
+					event.stopImmediatePropagation();
 				}).bind(this));
 			}
 		};
