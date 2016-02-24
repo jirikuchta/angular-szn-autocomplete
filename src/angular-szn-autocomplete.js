@@ -122,7 +122,7 @@
 				this._dom.input.bind("blur", (function () {
 					// when we click on some item in popup the blur event is fired
 					// before the item can be selected. So we have to wait a little.
-					this._$timeout(this._hide.bind(this, true), 200);
+					this._$timeout(this._hide.bind(this, true), 300);
 				}).bind(this));
 
 				// we need some methods and variables to be accessible within isolated popup scope
@@ -260,14 +260,6 @@
 	 * @param {bool} digest Trigger $digest cycle?
 	 */
 	SznAutocompleteLink.prototype._hide = function (digest) {
-
-		if (this._popupScope.highlightIndex > -1) {
-			var item = this._popupScope.results[this._popupScope.highlightIndex];
-			if (item && item.disable) {
-				return;
-			}
-		}
-
 		if (this._popupScope.show) {
 
 			if (this._delayTimeout) {
@@ -294,7 +286,6 @@
 				instanceId: this._options.uniqueId
 			});
 		}
-
 
 	};
 
