@@ -34,6 +34,8 @@
 			this._popupScope.show = false;
 			this._popupScope.highlightIndex = -1;
 
+			this._cancelSearch = false;
+
 			this._dom = {
 				input: $elm,
 				popupCont: null,
@@ -192,7 +194,7 @@
 		this._deferredResults = this._$q.defer();
 		this._deferredResults.promise.then(
 			(function (query, data) {
-
+				if (!this._cancelSearch) {
 				// there are no results. Hide popup.
 				if (!data.results || !data.results.length) {
 					if (!this._options.noResult) {
@@ -234,7 +236,10 @@
 					}
 					this._dom.shadowInput.css("visibility", "");
 				}
-
+				}
+				else {
+					this._cancelSearch = false;
+				}
 				this._popupScope.loading = false;
 			}).bind(this, query),
 			(function () {
@@ -305,6 +310,7 @@
 						this._select(item);
 					} else {
 						this._popupScope.highlightIndex = -1;
+						this._popupScope.$emit('autocomplete_enter', e.currentTarget.value);
 						this._hide(true);
 					}
 				break;
@@ -329,6 +335,13 @@
 					}
 				break;
 			};
+		}
+		else {
+			if (e.keyCode === 13) {
+				this._popupScope.$emit('autocomplete_enter', e.currentTarget.value);
+				this._cancelSearch = true;
+				this._hide(true);
+			}
 		}
 	};
 
