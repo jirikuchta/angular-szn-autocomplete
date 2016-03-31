@@ -317,7 +317,10 @@
 				}
 				else {
 					this._popupScope.highlightIndex = -1;
-					this._popupScope.$emit('autocomplete_enter', e.currentTarget.value);
+					this._$scope.$emit("sznAutocomplete-enter", {
+						instanceId: this._options.uniqueId,
+						itemData: e.currentTarget.value
+					});
 					this._hide(true);
 				}
 				break;
@@ -345,7 +348,10 @@
 		}
 		else {
 			if (e.keyCode === 13) {
-				this._popupScope.$emit('autocomplete_enter', e.currentTarget.value);
+				this._$scope.$emit("sznAutocomplete-enter", {
+					instanceId: this._options.uniqueId,
+					itemData: e.currentTarget.value
+				});
 				this._cancelSearch = true;
 				this._hide(true);
 			}

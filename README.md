@@ -5,6 +5,7 @@ This is a fork of Jiří Kuchta's angular-szn-autocomplete (https://github.com/j
 * allow disable state for an item in the result dropdown menu
 * allow a dropdown menu linear navigation or not with UP/DOWN key (keydown not going to the first item when reaching the last menu item. Keyup not going to the last item when reaching the first item. no loop)
 * Allow to display a no result container in the dropdown result menu when there is no result returned.
+* Add a `sznAutocomplete-enter` event when enter key is pressed in the input field
 
 ##Description
 
@@ -122,6 +123,7 @@ The directive emits following events allowing further customization:
 * `sznAutocomplete-show`: emitted each time the suggestions list shows
 * `sznAutocomplete-hide`: emitted each time the suggestions list hides
 * `sznAutocomplete-select`: emitted when some suggest item is selected. The selected item data is passed in the event data object
+* `sznAutocomplete-enter`: emitted when the enter key is pressed in the input field
 
 ## License
 
