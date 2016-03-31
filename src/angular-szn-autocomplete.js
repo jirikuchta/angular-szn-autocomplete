@@ -8,7 +8,7 @@
 (function () {
 	"use strict";
 
-	var ngModule = angular.module( "angular-szn-autocomplete", ["angular-szn-autocomplete/template/shadowinput.html", "angular-szn-autocomplete/template/default.html"]);
+	var ngModule = angular.module("angular-szn-autocomplete", ["angular-szn-autocomplete/template/shadowinput.html", "angular-szn-autocomplete/template/default.html"]);
 
 	var SznAutocompleteLink = function ($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs) {
 		this._$q = $q;
@@ -54,19 +54,19 @@
 	// default configuration
 	SznAutocompleteLink.DEFAULT_OPTIONS = {
 		templateUrl: "angular-szn-autocomplete/template/default.html", // popup template URL
-		highlightFirst: false, 									// automatically highlight the first result in the popup?
-		highlightFirstIndex: 0, 							    // The index of the first result in the popup for the highlightFirst option, default to '0'.
-		shadowInput: false, 									// show the shadowInput?
-		linear: false, 									        // keydown not going to the first item when reaching the last menu item. Keyup not going to the last item when reaching the first item. no loop
-		noResult: false,                                        // Don't display the no result message
-		onSelect: null, 										// a function, or name of scope function, to call after selection
-		searchMethod: "getAutocompleteResults", 				// name of scope method to call to get results
-		popupParent: "",										// CSS selector of element in which the results should be appended into (default is parent element of the main input)
-		shadowInputParent: "",									// CSS selector of element in which the shadowInput should be appended into (default is parent element of the main input)
-		delay: 100, 											// time in ms to wait before calling for results
-		minLength: 1,											// minimal number of character that needs to be entered to search for results
-		uniqueId: null,											// this ID will be passed as an argument in every event to easily identify this instance (in case there are multiple instances on the page)
-		boldMatches: true										// bold matches in results?
+		highlightFirst: false, // automatically highlight the first result in the popup?
+		highlightFirstIndex: 0, // The index of the first result in the popup for the highlightFirst option, default to '0'.
+		shadowInput: false, // show the shadowInput?
+		linear: false, // keydown not going to the first item when reaching the last menu item. Keyup not going to the last item when reaching the first item. no loop
+		noResult: false, // Don't display the no result message
+		onSelect: null, // a function, or name of scope function, to call after selection
+		searchMethod: "getAutocompleteResults", // name of scope method to call to get results
+		popupParent: "", // CSS selector of element in which the results should be appended into (default is parent element of the main input)
+		shadowInputParent: "", // CSS selector of element in which the shadowInput should be appended into (default is parent element of the main input)
+		delay: 100, // time in ms to wait before calling for results
+		minLength: 1, // minimal number of character that needs to be entered to search for results
+		uniqueId: null, // this ID will be passed as an argument in every event to easily identify this instance (in case there are multiple instances on the page)
+		boldMatches: true // bold matches in results?
 	};
 
 	SznAutocompleteLink.IGNORED_KEYS = [16, 17, 18, 20, 37];
@@ -132,7 +132,9 @@
 				this._popupScope.select = this._select.bind(this);
 				this._popupScope.boldMatches = this._options.boldMatches;
 
-				this._$scope.$emit("sznAutocomplete-init", {instanceId: this._options.uniqueId});
+				this._$scope.$emit("sznAutocomplete-init", {
+					instanceId: this._options.uniqueId
+				});
 			}).bind(this));
 	};
 
@@ -150,7 +152,8 @@
 					this._delayTimeout = this._$timeout((function () {
 						this._getResults(query);
 					}).bind(this), this._options.delay);
-				} else {
+				}
+				else {
 					// not enough number of characters
 					this._hide(true);
 				}
@@ -166,7 +169,8 @@
 		if (this.constructor.IGNORED_KEYS.indexOf(e.keyCode) == -1) {
 			if (this.constructor.NAVIGATION_KEYS.indexOf(e.keyCode) != -1) {
 				this._navigate(e);
-			} else {
+			}
+			else {
 				// new search is about to be performed
 
 				// cancel previous timeout
@@ -195,54 +199,54 @@
 		this._deferredResults.promise.then(
 			(function (query, data) {
 				if (!this._cancelSearch) {
-				// there are no results. Hide popup.
-				if (!data.results || !data.results.length) {
-					if (!this._options.noResult) {
-						this._hide();
-						return;
-					} else {
-						// reset the results array
-						this._popupScope.results = [];
+					// there are no results. Hide popup.
+					if (!data.results || !data.results.length) {
+						if (!this._options.noResult) {
+							this._hide();
+							return;
+						}
+						else {
+							// reset the results array
+							this._popupScope.results = [];
 
-						// propagete actual query into popup scope. Will be used for bolding string matches.
-						this._popupScope.query = this._dom.input[0].value;
+							// propagete actual query into popup scope. Will be used for bolding string matches.
+							this._popupScope.query = this._dom.input[0].value;
 
-						this._show();
-						this._popupScope.loading = false;
-						return;
-					}
-				}
-
-				// all returned data are available in the popup scope
-				for (var key in data) {
-					this._popupScope[key] = data[key];
-				}
-
-				this._show();
-
-				if (this._options.highlightFirst) {
-					this._highlight(this._options.highlightFirstIndex);
-				}
-
-				// propagete actual query into popup scope. Will be used for bolding string matches.
-				this._popupScope.query = this._dom.input[0].value;
-
-				if (this._options.shadowInput) {
-					this._popupScope.shadowInputValue = "";
-					if (data.results[0].value.toLowerCase() != query.toLowerCase()) {
-						if (data.results[0].value.substring(0, query.length).toLowerCase() == query.toLowerCase()) {
-							this._popupScope.shadowInputValue = query + data.results[0].value.substring(query.length);
+							this._show();
+							this._popupScope.loading = false;
+							return;
 						}
 					}
-					this._dom.shadowInput.css("visibility", "");
-				}
+
+					// all returned data are available in the popup scope
+					for (var key in data) {
+						this._popupScope[key] = data[key];
+					}
+
+					this._show();
+
+					if (this._options.highlightFirst) {
+						this._highlight(this._options.highlightFirstIndex);
+					}
+
+					// propagete actual query into popup scope. Will be used for bolding string matches.
+					this._popupScope.query = this._dom.input[0].value;
+
+					if (this._options.shadowInput) {
+						this._popupScope.shadowInputValue = "";
+						if (data.results[0].value.toLowerCase() != query.toLowerCase()) {
+							if (data.results[0].value.substring(0, query.length).toLowerCase() == query.toLowerCase()) {
+								this._popupScope.shadowInputValue = query + data.results[0].value.substring(query.length);
+							}
+						}
+						this._dom.shadowInput.css("visibility", "");
+					}
 				}
 				else {
 					this._cancelSearch = false;
 				}
 				this._popupScope.loading = false;
-			}).bind(this, query),
-			(function () {
+			}).bind(this, query), (function () {
 				this._hide(true);
 			}).bind(this)
 		);
@@ -256,7 +260,9 @@
 	SznAutocompleteLink.prototype._show = function () {
 		if (!this._popupScope.show) {
 			this._popupScope.show = true;
-			this._$scope.$emit("sznAutocomplete-show", {instanceId: this._options.uniqueId});
+			this._$scope.$emit("sznAutocomplete-show", {
+				instanceId: this._options.uniqueId
+			});
 		}
 	};
 
@@ -301,38 +307,39 @@
 	SznAutocompleteLink.prototype._navigate = function (e) {
 		if (this._popupScope.show) {
 			switch (e.keyCode) {
-				case 27: // ESC
+			case 27: // ESC
+				this._hide(true);
+				break;
+			case 13: // ENTER
+				var item = this._popupScope.results[this._popupScope.highlightIndex];
+				if (item && !item.disable) {
+					this._select(item);
+				}
+				else {
+					this._popupScope.highlightIndex = -1;
+					this._popupScope.$emit('autocomplete_enter', e.currentTarget.value);
 					this._hide(true);
+				}
 				break;
-				case 13: // ENTER
-					var item = this._popupScope.results[this._popupScope.highlightIndex];
-					if (item && !item.disable) {
-						this._select(item);
-					} else {
-						this._popupScope.highlightIndex = -1;
-						this._popupScope.$emit('autocomplete_enter', e.currentTarget.value);
-						this._hide(true);
-					}
+			case 38: // UP
+				e.preventDefault();
+				this._move(-1);
 				break;
-				case 38: // UP
+			case 40: // DOWN
+				e.preventDefault();
+				this._move(1);
+				break;
+			case 39: // RIGHT
+				if (this._options.shadowInput && this._popupScope.shadowInputValue) {
 					e.preventDefault();
-					this._move(-1);
+					this._copyFromShadow();
+				}
 				break;
-				case 40: // DOWN
+			case 9: // TAB
+				if (this._options.shadowInput && this._popupScope.shadowInputValue) {
 					e.preventDefault();
-					this._move(1);
-				break;
-				case 39: // RIGHT
-					if (this._options.shadowInput && this._popupScope.shadowInputValue) {
-						e.preventDefault();
-						this._copyFromShadow();
-					}
-				break;
-				case 9: // TAB
-					if (this._options.shadowInput && this._popupScope.shadowInputValue) {
-						e.preventDefault();
-						this._copyFromShadow();
-					}
+					this._copyFromShadow();
+				}
 				break;
 			};
 		}
@@ -395,7 +402,9 @@
 	 */
 	SznAutocompleteLink.prototype._highlight = function (index, digest) {
 		this._popupScope.highlightIndex = index;
-		if (digest) { this._popupScope.$digest(); }
+		if (digest) {
+			this._popupScope.$digest();
+		}
 	};
 
 	/**
@@ -433,13 +442,16 @@
 		if (index > this._popupScope.results.length - 1) {
 			if (!this._options.linear) {
 				index = this._options.highlightFirstIndex;
-			} else {
+			}
+			else {
 				index = this._popupScope.results.length - 1;
 			}
-		} else if (index < 0) {
+		}
+		else if (index < 0) {
 			if (!this._options.linear) {
 				index = this._popupScope.results.length - 1;
-			} else {
+			}
+			else {
 				index = -1;
 			}
 		}
@@ -457,9 +469,11 @@
 		var i = queryWords.length - 1;
 		if (queryWords[i].length < shadowWords[i].length) { // complete word
 			queryWords[i] = shadowWords[i];
-		} else if (shadowWords[i + 1]) { // append next word
+		}
+		else if (shadowWords[i + 1]) { // append next word
 			queryWords.push(shadowWords[i + 1]);
-		} else {
+		}
+		else {
 			return;
 		}
 
@@ -479,10 +493,15 @@
 		var template = this._$templateCache.get(this._options.templateUrl);
 		if (template) {
 			deferred.resolve(template);
-		} else {
+		}
+		else {
 			this._$http.get(this._options.templateUrl)
-				.success((function (deferred, data) { deferred.resolve(data); }).bind(this, deferred))
-				.error((function (deferred, data) { throw new Error("angular-szn-autocomplete: Failed to load template \"" + this._options.templateUrl + "\".") }).bind(this));
+				.success((function (deferred, data) {
+					deferred.resolve(data);
+				}).bind(this, deferred))
+				.error((function (deferred, data) {
+					throw new Error("angular-szn-autocomplete: Failed to load template \"" + this._options.templateUrl + "\".")
+				}).bind(this));
 		}
 
 		return deferred.promise;
@@ -502,14 +521,16 @@
 
 		if (this._options.popupParent) {
 			this._dom.popupParent = findElement(this._options.popupParent);
-		} else {
+		}
+		else {
 			this._dom.popupParent = this._dom.input.parent();
 		}
 
 		if (this._options.shadowInput) {
 			if (this._options.shadowInputParent) {
 				this._dom.shadowInputParent = findElement(this._options.shadowInputParent);
-			} else {
+			}
+			else {
 				this._dom.shadowInputParent = this._dom.input.parent();
 			}
 		}
@@ -575,8 +596,8 @@
 	/**
 	 * Filter to bold search query matches in popup items
 	 */
-	ngModule.filter("sznAutocompleteBoldMatch", function() {
-		return function(matchItem, query) {
+	ngModule.filter("sznAutocompleteBoldMatch", function () {
+		return function (matchItem, query) {
 			var i = matchItem.toLowerCase().indexOf(query.toLowerCase());
 			if (i < 0) {
 				return matchItem;
@@ -594,7 +615,7 @@
 	/**
 	 * Shadow input template
 	 */
-	angular.module("angular-szn-autocomplete/template/shadowinput.html", []).run(["$templateCache", function($templateCache) {
+	angular.module("angular-szn-autocomplete/template/shadowinput.html", []).run(["$templateCache", function ($templateCache) {
 		$templateCache.put("angular-szn-autocomplete/template/shadowinput.html",
 			'<input type="text" class="szn-autocomplete-shadow-input szn-shadow" ng-value="shadowInputValue" disabled="disabled">'
 		);
@@ -603,13 +624,13 @@
 	/**
 	 * Default popup template
 	 */
-	angular.module("angular-szn-autocomplete/template/default.html", []).run(["$templateCache", function($templateCache) {
+	angular.module("angular-szn-autocomplete/template/default.html", []).run(["$templateCache", function ($templateCache) {
 		$templateCache.put("angular-szn-autocomplete/template/default.html",
 			'<ul ng-show="show" class="szn-autocomplete-results" ng-class="{loading: loading}">\n' +
-				'<li szn-autocomplete-result ng-repeat="result in results" ng-class="{selected: highlightIndex == $index}">\n' +
-					'<span ng-if="boldMatches" view-as-html="result.value | sznAutocompleteBoldMatch:query"></span>\n' +
-					'<span ng-if="!boldMatches">{{result.value}}</span>\n' +
-				'</li>\n' +
+			'<li szn-autocomplete-result ng-repeat="result in results" ng-class="{selected: highlightIndex == $index}">\n' +
+			'<span ng-if="boldMatches" view-as-html="result.value | sznAutocompleteBoldMatch:query"></span>\n' +
+			'<span ng-if="!boldMatches">{{result.value}}</span>\n' +
+			'</li>\n' +
 			'</ul>'
 		);
 	}]);
