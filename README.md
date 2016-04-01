@@ -31,10 +31,10 @@ Features:
 
 **1. Download via npm or bower**
 ```bash
-$ npm install angular-szn-autocomplete
-$ bower install angular-szn-autocomplete
+$ npm install angular-szn-autocomplete-build
+$ bower install angular-szn-autocomplete-build
 ```
-(or simply [download zip file](https://github.com/jirikuchta/angular-szn-autocomplete/archive/master.zip) and copy the `angular-szn-autocomplete.js` and `angular-szn-autocomplete.css` files into your project)
+(or simply [download zip file](https://github.com/sapbuild/angular-szn-autocomplete-build/archive/master.zip) and copy the `angular-szn-autocomplete.js` and `angular-szn-autocomplete.css` files into your project)
 
 **2. Link the files in the page header**
 ```html
