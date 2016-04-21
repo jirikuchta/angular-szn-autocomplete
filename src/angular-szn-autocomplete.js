@@ -353,6 +353,12 @@
 					itemData: e.currentTarget.value
 				});
 				this._cancelSearch = true;
+
+				// cancel previous timeout
+				if (this._delayTimeout) {
+					this._$timeout.cancel(this._delayTimeout);
+				}
+
 				this._hide(true);
 			}
 		}
