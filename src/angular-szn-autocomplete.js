@@ -247,7 +247,7 @@
 				}
 				this._popupScope.loading = false;
 			}).bind(this, query), (function () {
-				this._hide(true);
+				this._hide();
 			}).bind(this)
 		);
 
