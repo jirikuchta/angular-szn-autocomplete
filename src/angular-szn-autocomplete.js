@@ -359,7 +359,7 @@
 					this._$timeout.cancel(this._delayTimeout);
 				}
 
-				this._hide(true);
+				this._hide();
 			}
 		}
 	};
