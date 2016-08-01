@@ -285,6 +285,7 @@
 					} else {
 						this._hide();
 					}
+					this._hide(true);
 				break;
 				case 38: // UP
 					e.preventDefault();
