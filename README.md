@@ -73,13 +73,20 @@ Two argument are passed to the function:
 
 You are supposed to use the query string to perform your search and then resolve the deferred object with results data object. [See example](http://jsfiddle.net/jirikuchta/ac770wee/).
 
-All data you return will be accessible in the popup template, so put everything you want to display in the popup into it. There is one requirement on the structure of the data - the returned object has to contain `results` array which has objects as its items. Each item has one mandatory key `value` that holds the suggested string. Example:
+All data you return will be accessible in the popup template, so put everything you want to display in the popup into it. There is one requirement on the structure of the data - the returned object has to contain `results` array which has objects as its items.
+Each item has the following properties:
+* **value**: (mandatory) string to display in the list of suggestions
+* **inputValue**: (optional) string to fill into the connected input field upon selection and while navigating over the item (falls back to `value`)
+* any other custom data
+
+Example:
 
 ```javascript
 {
-  "results": [
+  results: [
     {
-      "value": "foobar",
+      value: "foo",
+      inputValue: "bar",
       // any custom data
     }
   ]

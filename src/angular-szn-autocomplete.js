@@ -315,7 +315,7 @@
 	 * @param {object} item Scope data of selected item
 	 */
 	SznAutocompleteLink.prototype._select = function (item) {
-		if (item) { this._setValue(item.value); }
+		if (item) { this._setValue(item); }
 
 		this._$scope.$emit("sznAutocomplete-select", {
 			instanceId: this._options.uniqueId,
@@ -336,12 +336,15 @@
 
 	/**
 	 * Set value into main input
-	 * @param {string} value A string to be set as value. Default is actually highlighted result value.
+	 * @param {object} item The item containing the string to be set as value. Default is actually highlighted result value.
 	 */
-	SznAutocompleteLink.prototype._setValue = function (value) {
-		if (value) {
-			this._$scope[this._$attrs["ngModel"]] = value;
-			this._$scope.$digest();
+	SznAutocompleteLink.prototype._setValue = function (item) {
+		if (item) {
+		var value = item.inputValue || item.value;
+			if (value) {
+				this._$scope[this._$attrs["ngModel"]] = value;
+				this._$scope.$digest();
+			}
 		}
 	};
 
@@ -366,7 +369,7 @@
 
 		var i = this._getMoveIndex(direction);
 		this._highlight(i, true);
-		this._setValue(this._popupScope.results[i].value);
+		this._setValue(this._popupScope.results[i]);
 	};
 
 	/**
