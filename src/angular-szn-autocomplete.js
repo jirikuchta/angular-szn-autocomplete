@@ -2,7 +2,7 @@
  * An AngularJS directive to display suggestions while typing into text input.
  *
  * @author Jiri Kuchta <jiri.kuchta@live.com>
- * @version 1.0.3
+ * @version 1.0.4
  *
  */
 (function () {
@@ -279,12 +279,12 @@
 					this._hide(true);
 				break;
 				case 13: // ENTER
+					e.preventDefault();
 					var item = this._popupScope.results[this._popupScope.highlightIndex];
 					if (item) {
 						this._select(item);
-					} else {
-						this._hide();
 					}
+					this._hide();
 				break;
 				case 38: // UP
 					e.preventDefault();
