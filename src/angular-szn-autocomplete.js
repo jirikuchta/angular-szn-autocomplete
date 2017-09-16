@@ -10,7 +10,7 @@
 
 	var ngModule = angular.module( "angular-szn-autocomplete", ["angular-szn-autocomplete/template/shadowinput.html", "angular-szn-autocomplete/template/default.html"]);
 
-	var SznAutocompleteLink = function ($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs) {
+	var SznAutocompleteLink = function ($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs, $parse) {
 		this._$q = $q;
 		this._$timeout = $timeout;
 		this._$http = $http;
@@ -18,6 +18,7 @@
 		this._$templateCache = $templateCache;
 		this._$scope = $scope;
 		this._$attrs = $attrs;
+	    this._$parse = $parse;
 
 		$timeout((function ($elm) {
 
@@ -340,7 +341,7 @@
 	 */
 	SznAutocompleteLink.prototype._setValue = function (value) {
 		if (value) {
-			this._$scope[this._$attrs["ngModel"]] = value;
+		    this._$parse(this._$attrs["ngModel"]).assign(this._$scope, value);
 			this._$scope.$digest();
 		}
 	};
@@ -390,8 +391,8 @@
 	 */
 	SznAutocompleteLink.prototype._copyFromShadow = function () {
 		var shadowWords = this._popupScope.shadowInputValue.split(" ");
-		var queryWords = this._$scope[this._$attrs["ngModel"]].split(" ");
-
+		var queryWords = this._$parse(this._$attrs["ngModel"])(this._$scope).split(" ");
+		
 		var i = queryWords.length - 1;
 		if (queryWords[i].length < shadowWords[i].length) { // complete word
 			queryWords[i] = shadowWords[i];
@@ -402,8 +403,8 @@
 		}
 
 		// set input value and call for new results
-		var query = queryWords.join(" ")
-		this._$scope[this._$attrs["ngModel"]] = query;
+		var query = queryWords.join(" ");
+		this._$parse(this._$attrs["ngModel"]).assign(this._$scope, query);
 		this._getResults(query);
 	};
 
@@ -461,12 +462,12 @@
 		this._popupScope.$destroy();
 	};
 
-	ngModule.directive("sznAutocomplete", ["$q", "$timeout", "$http", "$compile", "$templateCache", function ($q, $timeout, $http, $compile, $templateCache) {
+	ngModule.directive("sznAutocomplete", ["$q", "$timeout", "$http", "$compile", "$templateCache", "$parse", function ($q, $timeout, $http, $compile, $templateCache, $parse) {
 		return {
 			restrict: "AC",
 			require: 'ngModel',
 			link: function ($scope, $elm, $attrs) {
-				return new SznAutocompleteLink($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs);
+			    return new SznAutocompleteLink($q, $timeout, $http, $compile, $templateCache, $scope, $elm, $attrs, $parse);
 			}
 		};
 	}]);
