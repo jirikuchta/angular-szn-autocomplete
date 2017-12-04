@@ -2,7 +2,7 @@
  * An AngularJS directive to display suggestions while typing into text input.
  *
  * @author Jiri Kuchta <jiri.kuchta@live.com>
- * @version 1.0.4
+ * @version 1.0.5
  *
  */
 (function () {
@@ -183,29 +183,33 @@
 	 */
 	SznAutocompleteLink.prototype._getResults = function (query) {
 
+		// eventual previous request has to be cancelled
+		if (this._deferredResults) {
+			this._deferredResults.reject({
+				reason: 'cancelled'
+			});
+		}
+
 		// "loading" scope variable can be used to show loading indicator
 		this._popupScope.loading = true;
 
 		this._deferredResults = this._$q.defer();
 		this._deferredResults.promise.then(
 			(function (query, data) {
-
 				// there are no results. Hide popup.
 				if (!data.results || !data.results.length) {
 					this._hide();
 					return;
 				}
 
-				// all returned data are available in the popup scope
+				// propage data to popup scope
 				for (var key in data) {
 					this._popupScope[key] = data[key];
 				}
 
 				this._show();
 
-				if (this._options.highlightFirst) {
-					this._highlight(0);
-				}
+				this._highlight(this._options.highlightFirst ? 0 : -1);
 
 				// propagete actual query into popup scope. Will be used for bolding string matches.
 				this._popupScope.query = this._dom.input[0].value;
@@ -222,7 +226,10 @@
 
 				this._popupScope.loading = false;
 			}).bind(this, query),
-			(function () {
+			(function (data) {
+				if (data && data.reason == 'cancelled') {
+					return;
+				}
 				this._hide(true);
 			}).bind(this)
 		);
@@ -279,10 +286,10 @@
 					this._hide(true);
 				break;
 				case 13: // ENTER
-					e.preventDefault();
 					var item = this._popupScope.results[this._popupScope.highlightIndex];
 					if (item) {
-						this._select(item);
+						e.preventDefault();
+						this._select(item, e);
 					}
 					this._hide();
 				break;
@@ -313,13 +320,17 @@
 	/**
 	 * Handles popup item selection
 	 * @param {object} item Scope data of selected item
+	 * @param {event} e Event triggering selection
 	 */
-	SznAutocompleteLink.prototype._select = function (item) {
-		if (item) { this._setValue(item.value); }
+	SznAutocompleteLink.prototype._select = function (item, e) {
+		if (item) {
+			this._setValue(item.value);
+		}
 
 		this._$scope.$emit("sznAutocomplete-select", {
 			instanceId: this._options.uniqueId,
-			itemData: item
+			itemData: item,
+			event: e || null
 		});
 
 		this._hide(true);
@@ -327,9 +338,9 @@
 		if (this._options.onSelect) {
 			// call the "onSelect" option callback
 			if (typeof this._options.onSelect == "string") {
-				this._$scope[this._options.onSelect](item);
+				this._$scope[this._options.onSelect](item, e);
 			} else if (typeof this._options.onSelect == "function") {
-				this._options.onSelect(item);
+				this._options.onSelect(item, e);
 			}
 		}
 	};
@@ -341,6 +352,10 @@
 	SznAutocompleteLink.prototype._setValue = function (value) {
 		if (value) {
 			this._$scope[this._$attrs["ngModel"]] = value;
+			this._$scope.$emit("sznAutocomplete-insertValue", {
+				instanceId: this._options.uniqueId,
+				value: value
+			});
 			this._$scope.$digest();
 		}
 	};
@@ -489,9 +504,9 @@
 						$scope.highlight(-1, true);
 					}
 				}).bind(this));
-				$elm.on("click", (function () {
+				$elm.on("click", (function (e) {
 					// select this result
-					$scope.select($scope.results[$scope.$index]);
+					$scope.select($scope.results[$scope.$index], e);
 				}).bind(this));
 			}
 		};
