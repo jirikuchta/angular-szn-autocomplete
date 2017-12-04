@@ -80,7 +80,7 @@
 			 * @param {object} deferred "$q.defer()" object
 			 */
 			$scope.search = function (query, deferred) {
-				var url = "http://jkuchta.cz/wikisearch/?action=query&list=search&srsearch=intitle:" + query + "&format=json&srprop=wordcount%7Csnippet&continue&srlimit=5";
+				var url = "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=intitle:" + query + "&format=json&srprop=wordcount%7Csnippet&continue&srlimit=5";
 
 				$http.get(url).success((function (deferred, data) { // send request
 
