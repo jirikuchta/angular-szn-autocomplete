@@ -2,7 +2,7 @@
  * An AngularJS directive to display suggestions while typing into text input.
  *
  * @author Jiri Kuchta <jiri.kuchta@live.com>
- * @version 1.0.5
+ * @version 1.0.6
  *
  */
 (function () {
@@ -19,34 +19,26 @@
 		this._$scope = $scope;
 		this._$attrs = $attrs;
 
-		$timeout((function ($elm) {
+		// waiting timeout before calling for results ("delay" option)
+		this._delayTimeout = null;
 
-			this._options = this._getOptions();
+		// this is where we store promise when waiting for results
+		this._deferredResults = null;
 
-			// waiting timeout before calling for results ("delay" option)
-			this._delayTimeout = null;
+		// isolated scope that will be bound to the popup template
+		this._popupScope = this._$scope.$new(true);
+		this._popupScope.show = false;
+		this._popupScope.highlightIndex = -1;
 
-			// this is where we store promise when waiting for results
-			this._deferredResults = null;
+		this._dom = {
+			input: $elm,
+			popupCont: null,
+			popupParent: null,
+			shadowInput: null,
+			shadowInputParent: null
+		};
 
-			// isolated scope that will be bound to the popup template
-			this._popupScope = this._$scope.$new(true);
-			this._popupScope.show = false;
-			this._popupScope.highlightIndex = -1;
-
-			this._dom = {
-				input: $elm,
-				popupCont: null,
-				popupParent: null,
-				shadowInput: null,
-				shadowInputParent: null
-			};
-			this._findAndSetParentElements();
-
-			this._$scope.$on("$destroy", this._destroy.bind(this));
-
-			this._init();
-		}).bind(this, $elm), 200);
+		$scope.$evalAsync(this._init.bind(this));
 	};
 
 	// default configuration
@@ -96,6 +88,10 @@
 	 * Compiles and appends templates into DOM, adds event listeners
 	 */
 	SznAutocompleteLink.prototype._init = function () {
+		this._options = this._getOptions();
+		this._findAndSetParentElements();
+		this._$scope.$on("$destroy", this._destroy.bind(this));
+
 		this._getTemplate()
 			.then((function (template) {
 				this._dom.popupCont = angular.element(this._$compile(template)(this._popupScope));
@@ -350,14 +346,12 @@
 	 * @param {string} value A string to be set as value. Default is actually highlighted result value.
 	 */
 	SznAutocompleteLink.prototype._setValue = function (value) {
-		if (value) {
-			this._$scope[this._$attrs["ngModel"]] = value;
-			this._$scope.$emit("sznAutocomplete-insertValue", {
-				instanceId: this._options.uniqueId,
-				value: value
-			});
-			this._$scope.$digest();
-		}
+		this._$scope[this._$attrs["ngModel"]] = value || '';
+		this._$scope.$emit("sznAutocomplete-insertValue", {
+			instanceId: this._options.uniqueId,
+			value: value || ''
+		});
+		this._$scope.$digest();
 	};
 
 	/**
