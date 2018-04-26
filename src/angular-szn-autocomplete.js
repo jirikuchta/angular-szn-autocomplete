@@ -2,7 +2,7 @@
  * An AngularJS directive to display suggestions while typing into text input.
  *
  * @author Jiri Kuchta <jiri.kuchta@live.com>
- * @version 1.0.6
+ * @version 1.0.7
  *
  */
 (function () {
@@ -38,7 +38,10 @@
 			shadowInputParent: null
 		};
 
-		$scope.$evalAsync(this._init.bind(this));
+		// apparently we have to wait a little before inicialization
+		// otherwise, the suggest didnt show in same cases
+		// $evalAsync didnt help
+		$timeout(this._init.bind(this), 200);
 	};
 
 	// default configuration
